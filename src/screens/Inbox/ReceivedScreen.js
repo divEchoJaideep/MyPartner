@@ -1,0 +1,236 @@
+import {
+  Image,
+  Text,
+  View,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+} from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Container, Content, Header } from '../../components';
+import CommanText from '../../components/CommanText';
+import styles from './Style/InboxStyle';
+import CommanBtn from '../../components/CommanBtn';
+import { Images } from '../../theme';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import Loading from '../../components/Loading';
+import Error from '../../components/Error';
+import GetUserReceivedRequest from '../../api/GetUserReceivedRequest';
+import PostUserRequestAccepted from '../../api/PostUserRequestAccepted';
+import PostUserCancelRequest from '../../api/PostUserCancelRequest';
+import PostUserBlock from '../../api/PostUserBlock';
+import Toast from 'react-native-toast-message';
+import { interestCancel, interestReject } from '../../api/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const ReceivedRequest = () => {
+  const navigation = useNavigation();
+  const dispatch = useDispatch()
+  const token = useSelector((state) => state.auth.user.access_token);
+  const [loading, setLoading] = useState();
+  const [error, setError] = useState('');
+  const [receivedRequest, setReceivedRequest] = useState([]);
+  const data = [
+    {
+      id: 1,
+    },
+  ];
+  useFocusEffect(
+    useCallback(() => {
+      getUserReceivedRequest();
+    }, []),
+  );
+  // useEffect(() => {
+  //   getUserReceivedRequest();
+  // }, []);
+
+  const getUserReceivedRequest = async () => {
+    setLoading(true);
+    const response = await GetUserReceivedRequest({ token: token });
+    console.log('received request : ', response.data);
+
+    if (response && response.data) {
+      const pendingRequests = response.data.filter(
+        request => request.status === 'Pending',
+      );
+      setReceivedRequest(pendingRequests);
+      // setReceivedRequest(response.data);
+    } else {
+      setError(response.message);
+    }
+
+    setLoading(false);
+  };
+  const handleRequest = async (userId) => {
+    const response = await PostUserRequestAccepted({
+      token: token,
+      userId,
+    });
+
+    if (response && response.success) {
+      Toast.show({
+        type: 'success',
+        text1: 'Request Accepted',
+        text2: response.message || 'Request accepted successfully.',
+      });
+      // navigation.navigate('Sent');
+      getUserReceivedRequest();
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: response?.message || 'Failed to accept request.',
+      });
+    }
+  };
+
+  const handleCancelRequest = async (user_id) => {
+    console.log('Cancelling request for user_id:', user_id);
+
+    const data = { user_id };
+    // setLoading(true);
+    const token = await AsyncStorage.getItem('UserToken');
+    const response = await interestCancel(data, token);
+    console.log('response cancel : ', response);
+    if (response?.success ) {
+      Toast.show({
+        type: 'success',
+        text1: 'Request Cancelled',
+        text2: response.message || 'Request cancelled successfully.',
+      });
+      getUserReceivedRequest();
+      // setLoading(false);
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: response?.message  || 'Failed to cancel request. Please try again.',
+      });
+      // setLoading(false);
+
+    }
+  }
+
+  const handleBlockRequest = async (userId) => {
+    const response = await PostUserBlock({
+      token: token,
+      userId,
+    });
+
+    if (response && response.success) {
+      Toast.show({
+        type: 'success',
+        text1: 'User Blocked',
+        text2: response.message || 'User blocked successfully.',
+      });
+      getUserReceivedRequest();
+      navigation.navigate('Topboard');
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: response?.message || 'Failed to block user.',
+      });
+    }
+  };
+
+  const renderItem = ({ item }) => {
+    console.log('item : ', item);
+    return (
+      <View style={styles.flatlistView}>
+        <TouchableOpacity onPress={() => navigation.navigate('ProfileData')}>
+          <View style={styles.viewStyle}>
+            <Image
+              source={item?.photo ? { uri: item?.photo } : Images.userRoundIcon}
+              style={styles.imageStyle}
+              resizeMode="cover"
+            />
+            <View>
+              <View style={styles.detailsStyle}>
+                <CommanText
+                  commanText={item.name}
+                  commanTextstyle={styles.nameStyle}
+                />
+              </View>
+
+              <View style={styles.detailsStyle}>
+                <CommanText
+                  commanText={`${item.job_type}, `}
+                  commanTextstyle={styles.textStyle}
+                />
+                <CommanText
+                  commanText={item.caste}
+                  commanTextstyle={styles.textStyle}
+                />
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        <View style={styles.controlNameRow}>
+          <TouchableOpacity
+            style={[styles.buttonName, styles.leftBtn]}
+            onPress={() => handleRequest(item.id)}>
+            <CommanText commanText="Accept" commanTextstyle={styles.btnText} />
+          </TouchableOpacity>
+
+          <View style={{ borderWidth: 1, borderColor: 'white', height: 50 }} />
+
+          <TouchableOpacity
+            style={[styles.buttonName, styles.midlBtn]}
+            onPress={() => handleCancelRequest(item.user_id)}>
+            <CommanText
+              commanText="Cancel Request"
+              commanTextstyle={styles.btnText}
+            />
+          </TouchableOpacity>
+
+          <View style={{ borderWidth: 1, borderColor: 'white', height: 50 }} />
+
+          <TouchableOpacity
+            style={[styles.buttonName, styles.rightBtn]}
+            onPress={() => handleBlockRequest(item.id)}>
+            <CommanText commanText="Block" commanTextstyle={styles.btnText} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <Container statusBar={true}>
+      <Content hasHeader contentContainerStyle={styles.container}>
+        <Error error={error} />
+        <Loading loading={loading} />
+        {receivedRequest.length > 0 ? (
+          <FlatList
+            data={receivedRequest}
+            renderItem={renderItem}
+            keyExtractor={item => item.id.toString()}
+            pagingEnabled
+            scrollEnabled={false}
+          />
+
+        ) : (
+          !loading &&
+          <View style={styles.innerView}>
+            <CommanText
+              commanText="No Pending Requests"
+              commanTextstyle={styles.birthdayText}
+            />
+            <CommanText commanText=" Check out more Profiles and continue your Partner search" />
+          </View>
+        )}
+        <CommanBtn
+              btnText="Search Partner"
+              onBtnPress={() => navigation.navigate('Home')}
+              commanBtnTextStyle={styles.commanBtnTextStyle}
+              commanBtnStyle={styles.btnStyle}
+            />
+      </Content>
+    </Container>
+  );
+};
+
+export default ReceivedRequest;
