@@ -1,18 +1,21 @@
 import EStyleSheet from 'react-native-extended-stylesheet';
 import {Colors, Fonts} from '../../../theme';
 import {isIphoneX} from '../../../libs/Utils';
+import { Dimensions } from 'react-native';
+
+const screenWidth = Dimensions.get('window').width
 
 const styles = EStyleSheet.create({
   container: {
-    paddingBottom: '15rem',
-    paddingHorizontal: '20rem',
+  width:screenWidth,
+   flex:1,
   },
-  searchInputStyle: {
+  searchInputStyle: { 
     width: '100% - 40rem',
     marginBottom: '23rem',
   },
   chatListLink: {
-    paddingHorizontal: '4rem',
+    paddingHorizontal: '20rem',
     paddingTop: '4rem',
     paddingBottom: '14rem',
     marginBottom: '17rem',
@@ -125,9 +128,13 @@ const styles = EStyleSheet.create({
     paddingRight: '10rem',
     ...Fonts.style.normalText,
   },
+  
   chatInputContainerStyle: {
-    borderWidth: 0,
+    borderWidth: 1,
     borderTopWidth: 0,
+    borderColor: Colors.lightGray,
+    marginHorizontal: '15rem',
+    marginVertical: '10rem',
     position: 'relative',
     borderRadius: '25rem',
     paddingLeft: '0rem',
@@ -151,7 +158,7 @@ const styles = EStyleSheet.create({
     backgroundColor: Colors.white,
     width: '100%',
     paddingTop: '22rem',
-    paddingBottom: '200rem',
+     paddingBottom: '20rem',
     borderTopLeftRadius: '40rem',
     borderTopRightRadius: '40rem',
     paddingLeft: '17rem',
@@ -181,11 +188,13 @@ const styles = EStyleSheet.create({
   },
   chatContainer: {
     '@media ios': {
-      marginBottom: isIphoneX() ? '95rem' : '112rem',
+      // marginBottom: isIphoneX() ? '95rem' : '112rem',
     },
     '@media android': {
-      marginBottom: '110rem',
+      marginBottom: 0,
     },
+    flex:1,
+     width: screenWidth,
   },
   dateRowStyle: {
     flexDirection: 'row',
@@ -235,6 +244,63 @@ const styles = EStyleSheet.create({
     paddingTop: '8rem',
     ...Fonts.style.normalText,
   },
+  unreadDot: {
+  backgroundColor: Colors.pink,
+  minWidth: 20,
+  height: 20,
+  borderRadius: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginLeft: 8,
+  paddingHorizontal: 5,
+},
+unreadDotText: {
+  color: Colors.white,
+  fontSize: 12,
+  fontWeight: 'bold',
+},
+blockedContainer:{
+  justifyContent:"center",
+  alignItems:"center",
+},
+modalOverlay: {
+  position: 'absolute',
+  top: 0, left: 0, right: 0, bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+modalContainer: {
+  width: '80%',
+  backgroundColor: '#fff',
+  borderRadius: 12,
+  padding: 20,
+  alignItems: 'center',
+},
+modalTitle: {
+  fontSize: 18,
+  fontWeight: '600',
+  marginBottom: 20,
+  color: Colors.black,
+},
+modalBtn: {
+  width: '100%',
+  paddingVertical: 12,
+  marginVertical: 6,
+  backgroundColor: Colors.lightGray,
+  borderRadius: 8,
+  alignItems: 'center',
+},
+modalBtnText: {
+  fontSize: 16,
+  color: Colors.black,
+},
+cancelBtn: {
+  backgroundColor: Colors.white,
+  borderWidth: 1,
+  borderColor: Colors.red,
+},
+
 });
 
 export default styles;

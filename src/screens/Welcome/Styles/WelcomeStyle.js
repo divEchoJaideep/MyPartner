@@ -50,7 +50,7 @@ const styles = EStyleSheet.create({
   welcomeBottomBtn: {
     paddingHorizontal: '25rem',
     marginTop: 'auto',
-    marginBottom: '20rem',
+    marginBottom: '40rem',
     alignItems: 'center',
   },
   imageStyle: {

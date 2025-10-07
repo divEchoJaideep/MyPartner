@@ -12,7 +12,22 @@ export default StyleSheet.create({
     paddingHorizontal: 20,
     
   },
-  
+  ChatBTNWrap:{
+    // backgroundColor:"#aaa",
+    zIndex:99,
+    position:"absolute",
+    bottom:20,
+    padding:20,
+    borderRadius:60,
+    justifyContent:"center",
+    alignSelf:'flex-end',
+    marginRight:20,
+  },
+  ChatBTN:{
+    width:40,
+    height:40,
+
+  },
   imageWrapper: {
     alignItems: 'center',
     width:width,

@@ -12,19 +12,9 @@ import styles from "./Styles/index";
 function ProfilePhoto(props) {
   const normalizeSource = (source) => {
     if (!source) return undefined;
-
-    if (typeof source === "string") {
-      return { uri: source }; // remote URL
-    }
-
-    if (typeof source === "object" && source.uri) {
-      return { uri: source.uri }; // picker object
-    }
-
-    if (typeof source === "number") {
-      return source; // require() local image
-    }
-
+    if (typeof source === "string") return { uri: source };
+    if (typeof source === "object" && source.uri) return { uri: source.uri };
+    if (typeof source === "number") return source;
     return undefined;
   };
 
@@ -32,26 +22,27 @@ function ProfilePhoto(props) {
     normalizeSource(props?.source)
   );
 
-  // 👇 Update when parent prop changes
   React.useEffect(() => {
     setImageSource(normalizeSource(props?.source));
   }, [props?.source]);
 
-  const pickPicture = () => {
-    ImagePicker.openPicker({
-      width: 110,
-      height: 110,
-      cropping: true,
-    }).then((image) => {
+  const pickPicture = async () => {
+    try {
+      const image = await ImagePicker.openPicker({
+        width: 110,
+        height: 110,
+        cropping: true,
+      });
       const picked = { uri: image.path };
       setImageSource(picked);
-
-      props.onChange({
+      props.onChange?.({
         uri: image.path,
         name: "profile_image.jpg",
-        type: "image/jpeg",
+        type: image.mime || "image/jpeg",
       });
-    });
+    } catch (error) {
+      console.log("Image pick cancelled or failed:", error.message);
+    }
   };
 
   return (
@@ -61,8 +52,8 @@ function ProfilePhoto(props) {
           style={[
             styles.uploadImageBtn,
             {
-              width: 120,
-              height: 120,
+              width: props.width ? props.width : 120,
+              height: props.height ? props.height : 120,
               borderWidth: 1,
               borderColor: "#ccc",
               borderRadius: 10,
@@ -75,7 +66,8 @@ function ProfilePhoto(props) {
         >
           {imageSource ? (
             <ImageBackground
-              style={{ width: "100%", height: "100%" }}
+              style={{ width: "100%", height: "100%", }}
+  resizeMode="stretch"
               source={imageSource}
             />
           ) : (
@@ -92,8 +84,10 @@ function ProfilePhoto(props) {
         <View style={styles.profileEditContent}>
           <Image
             source={imageSource || Images.UserImage}
-            resizeMode="cover"
-            style={styles.profileImage}
+            // resizeMode="cover"
+            style={[styles.profileImage,]
+              
+            }
           />
           <TouchableOpacity
             style={styles.userEditImageBtn}

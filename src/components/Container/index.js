@@ -1,9 +1,20 @@
 import React from 'react';
-import { SafeAreaView, StatusBar, View, Platform } from 'react-native';
+import { SafeAreaView, StatusBar, View } from 'react-native';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import Colors from '../../theme/Colors';
 import styles from './Styles';
 
 export default class Container extends React.Component {
+  static defaultProps = {
+    transparentStatusBar: false,
+    safeAreaView: true,
+    safeAreaViewHeader: true,
+    lightContent: false,
+    paddingBottomContainer: false, 
+    disablePaddingTop: true,       
+    statusBar: true,
+  };
+
   render() {
     const {
       children,
@@ -13,56 +24,70 @@ export default class Container extends React.Component {
       safeAreaView,
       safeAreaViewHeader,
       conatinerStyle,
+      style,
       statusBar,
+      paddingBottomContainer,
+      disablePaddingTop,
     } = this.props;
 
-    const style = {
-      flex: 0,
-      alignItems: 'center',
-      backgroundColor: !transparentStatusBar
-        ? statusBarColor || Colors.lighterGray
-        : Colors.transparent,
-    };
-
     return (
-      <>
-        {statusBar == 'undefined' && (
-          <StatusBar
-            backgroundColor={
-              lightContent
-                ? Colors.darkGray
-                : statusBarColor || Colors.lighterGray
-            }
-            barStyle={lightContent ? 'light-content' : 'dark-content'}
-          />
-        )}
+      <SafeAreaInsetsContext.Consumer>
+        {(insets) => {
+          const statusBarHeight = insets?.top || 0;
+          const bottomInset = insets?.bottom || 0;
 
-        {/* ✅ SafeAreaView with bottom padding */}
-        {safeAreaView !== false && safeAreaViewHeader !== false && (
-          <SafeAreaView
-            style={[
-              styles.safeViewcontainer,
-              !statusBar ? styles.safeViewcontainerStatusBar : '',
-              conatinerStyle,
-              { paddingBottom: Platform.OS === 'ios' ? 20 : 40 }, // 👈 bottom safe padding
-            ]}
-          >
-            {children}
-          </SafeAreaView>
-        )}
+          return (
+            <>
+              {/* StatusBar */}
+              {statusBar !== false && (
+                <StatusBar
+                  translucent={!!transparentStatusBar}
+                  backgroundColor={
+                    transparentStatusBar
+                      ? 'transparent'
+                      : statusBarColor || Colors.lighterGray
+                  }
+                  barStyle={lightContent ? 'light-content' : 'dark-content'}
+                />
+              )}
 
-        {(safeAreaView === false || safeAreaViewHeader === false) && (
-          <View
-            style={[
-              styles.container,
-              safeAreaViewHeader === false && styles.statusBarMarginTop,
-              { paddingBottom: Platform.OS === 'ios' ? 20 : 10 }, // 👈 bottom safe padding
-            ]}
-          >
-            {children}
-          </View>
-        )}
-      </>
+              {/* SafeAreaView enabled */}
+              {safeAreaView !== false && safeAreaViewHeader !== false ? (
+                <SafeAreaView
+                  style={[
+                    styles.safeViewcontainer,
+                    conatinerStyle,
+                    style,
+                    {
+                      paddingTop: disablePaddingTop ? 0 : statusBarHeight,
+                      paddingBottom: paddingBottomContainer ? bottomInset : 0,
+                    },
+                  ]}
+                >
+                  {children}
+                </SafeAreaView>
+              ) : (
+                // Fallback with View
+                <View
+                  style={[
+                    styles.container,
+                    conatinerStyle,
+                    style,
+                    !transparentStatusBar && {
+                      marginTop: disablePaddingTop ? 0 : statusBarHeight,
+                    },
+                    {
+                      paddingBottom: paddingBottomContainer ? bottomInset : 0,
+                    },
+                  ]}
+                >
+                  {children}
+                </View>
+              )}
+            </>
+          );
+        }}
+      </SafeAreaInsetsContext.Consumer>
     );
   }
 }

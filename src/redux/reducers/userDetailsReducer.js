@@ -9,94 +9,106 @@ const userDetailsReducer = createSlice({
     userAddress: {},               // Address info
     userEducation: {},             // Education info
     userCareerInfo: {},            // Career info
-    userLanguage: {},              // Default empty string (can be array too)
-    userVerification: [            // Verification docs
-      {
-        document_type: null,
-        front_photo: null,
-        back_photo: null,
-      },
-    ],
+    userLanguage: {},              // Language info
+    userVerification: {            // Verification docs
+      document_type: null,
+      front_photo: null,
+      back_photo: null,
+    },
+    galleryImages: [],            
     loading: false,
     error: null,
     success: null,
+    setGalleryImages,    // <-- add this
+  setVerification, 
   },
   reducers: {
-    // Start state (loading on)
     start: (state) => {
       state.loading = true;
       state.error = null;
       state.success = null;
     },
-
-    // Failure (error capture)
     failure: (state, action) => {
       state.loading = false;
       state.success = null;
       state.error = action.payload;
     },
 
-    // Save Basic Info
     basicInfo: (state, action) => {
       state.loading = false;
       state.userBasicInfo = action.payload;
     },
 
-    // Save Religion & Cultural info
     religionAndCultural: (state, action) => {
       state.loading = false;
       state.userReligion = action.payload;
     },
 
-    // Save Physical Attributes
     physicalAttribute: (state, action) => {
       state.loading = false;
       state.userPhysicalAttributes = action.payload;
     },
 
-    // Save Address Info
     address: (state, action) => {
       state.loading = false;
       state.userAddress = action.payload;
     },
 
-    // Save Education Info
     education: (state, action) => {
       state.loading = false;
       state.userEducation = action.payload;
     },
 
-    // Save Career Info
     careerInfo: (state, action) => {
       state.loading = false;
       state.userCareerInfo = action.payload;
     },
 
-    // Save User Language
-   setUserLanguage: (state, action) => {
-    state.loading = false;
-    state.userLanguage = action.payload;
-  },
-
-    // Add Verification IDs
-    verificationIds: (state, action) => {
+    setUserLanguage: (state, action) => {
       state.loading = false;
-      state.userVerification = [...state.userVerification, action.payload];
+      state.userLanguage = action.payload;
     },
 
-    // Save Front Photo
+   setVerification: (state, action) => {
+  state.loading = false;
+  state.userVerification = action.payload; // replace object completely
+},
+
+updateVerification: (state, action) => {
+  state.loading = false;
+  state.userVerification = {
+    ...state.userVerification,
+    ...action.payload, // merge fields
+  };
+},
+
     frontPhoto: (state, action) => {
       state.loading = false;
-      state.front_photo = action.payload;
+      state.userVerification.front_photo = action.payload;
     },
 
-    // Save Back Photo
     backPhoto: (state, action) => {
       state.loading = false;
-      state.back_photo = action.payload;
+      state.userVerification.back_photo = action.payload;
     },
 
-    // Reset success & error
+    setGalleryImages: (state, action) => {
+      state.loading = false;
+      state.galleryImages = action.payload;
+    },
+
+    addGalleryImage: (state, action) => {
+      state.loading = false;
+      state.galleryImages = [...state.galleryImages, action.payload];
+    },
+
+    removeGalleryImage: (state, action) => {
+      state.loading = false;
+      state.galleryImages = state.galleryImages.filter(
+        (img) => img.id !== action.payload
+      );
+    },
+
     resetState: (state) => {
       state.success = null;
       state.error = null;
@@ -104,7 +116,6 @@ const userDetailsReducer = createSlice({
   },
 });
 
-// Export actions (with aliasing if needed)
 export const {
   start,
   failure,
@@ -115,11 +126,14 @@ export const {
   education,
   careerInfo,
   setUserLanguage,
-  verificationIds,
+  setVerification,       
+  updateVerification,    
   frontPhoto,
   backPhoto,
+  setGalleryImages,
+  addGalleryImage,
+  removeGalleryImage,
   resetState,
 } = userDetailsReducer.actions;
 
-// Export reducer
 export default userDetailsReducer.reducer;

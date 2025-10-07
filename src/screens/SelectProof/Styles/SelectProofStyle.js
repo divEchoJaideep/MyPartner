@@ -1,6 +1,9 @@
 import EStyleSheet from 'react-native-extended-stylesheet';
 import {Colors, Fonts} from '../../../theme';
 
+import { Dimensions } from 'react-native';
+const { width, height } = Dimensions.get("screen");
+
 const styles = EStyleSheet.create({
   container: {
     flex: 1,
@@ -9,6 +12,16 @@ const styles = EStyleSheet.create({
   },
   addIdBtn: {
     width: '165rem',
+  },
+  commanBtnTextStyle:{
+      color:Colors.white
+    },
+    commanText: {
+      marginHorizontal: 37,
+    },
+    twoBtnStyle:{
+    width: width - 40,
+    backgroundColor: Colors.pink,
   },
   howWorkText: {
     color: Colors.pink,

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 async function commonrequest(method, url, body, token) {
-  console.log('body common reques :',body);
+  // console.log('body common reques :',body);
   
   try {
     const isFormData = body instanceof FormData;

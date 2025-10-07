@@ -15,11 +15,13 @@ import { isIphoneX } from '../../libs/Utils';
 import CommanText from '../CommanText';
 import { Colors, Images } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
+import Container from '../Container';
 
 const { height, width } = Dimensions.get('window');
-
-const tabHeight = isIphoneX() ? 110 : 92;
-const tabContainerHeight = height - tabHeight;
+const dynamicMargin = height <= 800 ? 10 : 0;
+const dynamicHeight = height <= 800 ? height : height -80
+const tabHeight = isIphoneX() ? 110 : -22;
+const tabContainerHeight = height - - tabHeight;
 
 const SnapScrolling = ({
   data,
@@ -40,13 +42,12 @@ const SnapScrolling = ({
     return <ActivityIndicator style={{ marginVertical: 15 }} size="large" color={Colors.primary} />;
   };
 
-  console.log('data snapscroll', data);
-
   const renderItem = ({ item }) => {
     return (
       <ImageBackground
         source={{ uri: item.photo }}
-        style={[styles.videoContainer, { height: tabContainerHeight }]}>
+        resizeMode="cover"
+        style={[styles.videoContainer,]}>
 
         <TouchableOpacity
           onPress={() =>
@@ -58,7 +59,7 @@ const SnapScrolling = ({
           style={styles.itemWrap}>
 
           <View>
-            <View style={[styles.row, { width: width - 40, justifyContent: 'space-between' }]}>
+            <View style={[styles.row, { width: width - 40, justifyContent: 'space-between', marginTop: 20 }]}>
               <CommanText commanText={'Searching For'} commanTextstyle={styles.textStyle} />
               <CommanText commanText={item?.searching_for} commanTextstyle={styles.textStyle} />
             </View>
@@ -119,6 +120,8 @@ const SnapScrolling = ({
                     backgroundColor: Colors.white,
                     borderTopRightRadius: 25,
                     borderBottomRightRadius: 25,
+                    borderTopLeftRadius: 7,
+                    borderBottomLeftRadius: 7
                   },
                 ]}
                 onPress={() =>
@@ -160,24 +163,25 @@ const SnapScrolling = ({
   }
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={data}
-        keyExtractor={(item) => item.user_id.toString()}
-        renderItem={renderItem}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={Colors.primary}
-          />
-        }
-        showsVerticalScrollIndicator={false}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.2}
-        ListFooterComponent={renderFooter}
-      />
-    </View>
+    <FlatList
+      data={data}
+      keyExtractor={(item) => item.user_id.toString()}
+      renderItem={renderItem}
+      pagingEnabled={true}
+      snapToInterval={height}          
+      decelerationRate='normal'
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={Colors.primary}
+        />
+      }
+      showsVerticalScrollIndicator={false}
+      onEndReached={loadMore}
+      onEndReachedThreshold={0.2}
+      ListFooterComponent={renderFooter}
+    />
   );
 };
 
@@ -191,7 +195,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   videoContainer: {
-    height: tabContainerHeight,
+    height: dynamicHeight,
     width: width,
   },
   itemWrap: {
@@ -218,11 +222,13 @@ const styles = StyleSheet.create({
     // tintColor: Colors.white,
   },
   buttonWrap: {
-    marginTop: 10,
+    // marginTop: 10,
     height: 55,
-    overflow: 'hidden',
+    // // overflow: 'hidden',
     width: width - 40,
     flexDirection: 'row',
+    // position:"absolute",
+    marginBottom: dynamicMargin,
     alignItems: 'center',
     gap: 10,
     borderColor: Colors.white,
@@ -234,6 +240,8 @@ const styles = StyleSheet.create({
     width: (width - 40) / 2,
     paddingHorizontal: 20,
     paddingVertical: 14,
+    // borderRadius:10,
+    height: 55
   },
 });
 

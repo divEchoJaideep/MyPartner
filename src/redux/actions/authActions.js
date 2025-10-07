@@ -1,11 +1,17 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AsyncStorageRemoveItem from '../../hooks/AsyncStorageRemoveItem';
-import { authRequest, authSuccess, authFailure, logout as logoutAction } from '../reducers/authReducer'; // ✅ FIXED: import logout
+import { authRequest, authSuccess, authFailure, logout as logoutAction, restoreSession } from '../reducers/authReducer'; 
 
 export const loginRequest = () => ({
   type: 'LOGIN_REQUEST',
 });
 
 export const loginSuccess = (userData) => async (dispatch) => {
+   if (userData?.access_token) {
+        await AsyncStorage.setItem('UserToken', userData.access_token);
+      }
+ console.log('userData :',userData);
+      await AsyncStorage.setItem('UserInfo', JSON.stringify(userData));
   dispatch(authSuccess(userData));
 };
 
@@ -28,14 +34,38 @@ export const signupFailure = error => ({
   payload: error,
 });
 
-export const logout = () => {
-  return async dispatch => {
+export const loadUserFromStorage = () => {
+  return async (dispatch) => {
     try {
-      await AsyncStorageRemoveItem('userData');
-       await AsyncStorageRemoveItem('UserInfo');
-      dispatch(logoutAction()); 
+      const token = await AsyncStorage.getItem('UserToken');
+      const userInfo = await AsyncStorage.getItem('UserInfo');
+
+      if (token && userInfo) {
+        const parsedUser = JSON.parse(userInfo);
+
+        // Dispatch both token and user
+        dispatch(restoreSession({ token, user: parsedUser }));
+
+        console.log('parsedUser loadUserFromStorage :', parsedUser);
+        console.log('token loadUserFromStorage :', token);
+      }
     } catch (error) {
-      console.error('Error clearing user data:', error);
+      console.error('Error loading user:', error);
+      dispatch(authFailure(error));
     }
   };
 };
+
+
+export const logout = () => {
+  return async (dispatch) => {
+    try {
+      await AsyncStorage.removeItem("UserInfo");
+      await AsyncStorage.removeItem('UserToken'); 
+      dispatch(logoutAction());
+    } catch (error) {
+      console.error("Error clearing user data:", error);
+    }
+  };
+};
+

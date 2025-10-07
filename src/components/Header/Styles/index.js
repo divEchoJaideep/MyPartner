@@ -1,4 +1,4 @@
-import {Platform} from 'react-native';
+import { Platform } from 'react-native';
 
 import EStyleSheet from 'react-native-extended-stylesheet';
 
@@ -8,6 +8,7 @@ import Colors from '../../../theme/Colors';
 
 export default EStyleSheet.create({
   header: {
+    marginTop: Platform.OS === 'ios' ? '20rem' : 30,
     paddingHorizontal: '20rem',
     paddingVertical: '10rem',
     width: '100%',
@@ -61,9 +62,14 @@ export default EStyleSheet.create({
     marginLeft: '5rem',
     ...Fonts.style.boldText,
   },
-  leftArrow: {height: '20rem', width: '9.78rem'},
+  leftArrow: { height: '20rem', width: '9.78rem' },
   userRightImageBtn: {
     marginLeft: 'auto',
+  },
+  homeBTN: { height: '20rem', width: '9.78rem' },
+  homeBTN: {
+    width: '25rem',
+    height: '25rem',
   },
   userRightImage: {
     width: '42rem',
@@ -136,8 +142,8 @@ export default EStyleSheet.create({
     fontSize: Fonts.size.medium,
   },
   transparent: {
-  backgroundColor: 'transparent',
-  elevation: 0, // Android shadow
-  shadowOpacity: 0, // iOS shadow
-},
+    backgroundColor: 'transparent',
+    elevation: 0, // Android shadow
+    shadowOpacity: 0, // iOS shadow
+  },
 });

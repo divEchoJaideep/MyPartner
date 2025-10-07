@@ -49,7 +49,7 @@ function SplashScreen() {
     const token = await AsyncStorage.getItem('UserToken');
     // console.log("Splash screen token: ", token)
     const response = await commonrequest("GET", profiledropdownUrl, "", token,)
-    // console.log("getProfile response?.data: ", response)
+     console.log("getProfile response?.data: ", response)
     dispatch(setPreDefineState(response?.data))
   };
 

@@ -3,77 +3,39 @@ import React, { useEffect, useState } from 'react';
 import { Container, Content, Header } from '../../components';
 import CommanBtnScreen from '../../components/CommanBtn';
 import styles from './Styles/ProfileStyle';
-import CommanText from '../../components/CommanText';
 import { useNavigation } from '@react-navigation/native';
 import SelectDropdown from '../../components/SelectDropdown/Select';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import Error from '../../components/Error';
 import Loading from '../../components/Loading';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GetProfileDropdown, getUserAllDetails, upadateUserLanguage } from '../../api/api';
-import StatusModal from '../../components/StatusModal/StatusModal';
+import { getUserAllDetails } from '../../api/api';
+import { saveUserLanguage } from '../../redux/actions/userDetailsActions';
 
-const LanguageScreen = props => {
+const LanguageScreen = () => {
   const navigation = useNavigation();
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
 
-  const [languageOptions, setLanguageOptions] = useState([]);
-  const [actionType, setActionType] = useState(''); // save/next track karega
+  const { language_list } = useSelector(state => state.preList);
+  const { userLanguage, loading, error } = useSelector(state => state.userDetails);
+  const token = useSelector(state => state.auth.token);
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState(''); // success/error
-  const [modalMessage, setModalMessage] = useState('');
-
-  const [data, setData] = useState({
-    known_languages: [],
-  });
-
-  const userLanguage = useSelector(state => state.userDetails.userLanguage);
+  const [data, setData] = useState({ known_languages: [] });
 
   useEffect(() => {
-    getLanguage();
     getUserFullDetails();
   }, []);
 
-  // Fetch dropdown options
-  const getLanguage = async () => {
-    setLoading(true);
-    try {
-      const token = await AsyncStorage.getItem('UserToken');
-      const res = await GetProfileDropdown(token);
-
-      if (res?.success) {
-        setLanguageOptions(res?.data?.language_list || []);
-      } else {
-        setError(res?.message || 'Failed to fetch languages');
-      }
-    } catch (err) {
-      console.log('getLanguage Error:', err);
-      setError('Something went wrong while fetching languages');
-    }
-    setLoading(false);
-  };
-
-  // Fetch user details
   const getUserFullDetails = async () => {
-    setLoading(true);
     try {
-      const token = await AsyncStorage.getItem('UserToken');
       const res = await getUserAllDetails(token);
-
       if (res?.success) {
         setData({
           known_languages: res?.data?.language?.map(l => l.id.toString()) || [],
         });
-      } else {
-        setError(res?.message || 'Failed to fetch user languages');
       }
     } catch (err) {
       console.log('getUserFullDetails Error:', err);
-      setError('Something went wrong while fetching user details');
     }
-    setLoading(false);
   };
 
   const handleTextChange = (key, value) => {
@@ -83,54 +45,28 @@ const LanguageScreen = props => {
     }));
   };
 
-  const updateUserLanguage = async navigateTo => {
-    setLoading(true);
-    setActionType(navigateTo); // save/next ka type set ho jayega
-    try {
-      const token = await AsyncStorage.getItem('UserToken');
-      const payload = {
-        known_languages: data.known_languages || [],
-      };
-
-      const response = await upadateUserLanguage(payload, token);
-
-      if (response?.success) {
-        setModalType('success');
-        setModalMessage(response?.message || 'Language updated successfully');
-      } else {
-        setModalType('error');
-        setModalMessage(response?.message || 'Failed to update language');
-      }
-      setModalVisible(true);
-
-    } catch (err) {
-      console.log('UpdateLanguage API Error:', err);
-      setModalType('error');
-      setModalMessage('Something went wrong while updating language');
-      setModalVisible(true);
-    } finally {
-      setLoading(false);
+  const handleSubmit = async () => {
+    const res = await dispatch(saveUserLanguage(data, token));
+    if (res.success) {
+      navigation.navigate('Dashboard', { screen: 'Profile' });
     }
   };
 
-  // Modal close handler
-  const handleModalClose = () => {
-    setModalVisible(false);
-    if (modalType === 'success') {
-      if (actionType === 'profile') {
-        navigation.navigate('Dashboard', { screen: 'Profile' });
-      } else if (actionType === 'social') {
-        navigation.navigate('Social');
-      }
+  const nextStep = async () => {
+    const res = await dispatch(saveUserLanguage(data, token));
+    if (res.success) {
+      navigation.navigate('Social');
     }
   };
 
   return (
-    <Container>
+    <Container paddingBottomContainer={true}>
       <Header
         transparent
         hasBackBtn
         title="Language"
+        hasHomeBTN
+        onHomeBTN={() => navigation.navigate('Dashboard', { screen: 'Profile' })}
         onBackPress={() => navigation.goBack()}
       />
       <Content contentContainerStyle={styles.container}>
@@ -138,14 +74,13 @@ const LanguageScreen = props => {
         <Loading loading={loading} />
 
         <View style={styles.inputView}>
-          {/* Known Languages Dropdown */}
           <SelectDropdown
             MultiSelectDropdown
-            data={languageOptions.map(item => ({
+            data={language_list?.map(item => ({
               id: item.id.toString(),
               name: item.name,
-            }))}
-            value={data?.known_languages}
+            })) ?? []}
+            value={data.known_languages}
             label="Known Languages"
             placeholder="Select Known Languages"
             onSelectChange={selectedItems => {
@@ -168,25 +103,17 @@ const LanguageScreen = props => {
         }}>
         <CommanBtnScreen
           btnText="Save"
-          onBtnPress={() => updateUserLanguage('profile')}
+          onBtnPress={handleSubmit}
           commanBtnTextStyle={styles.commanBtnTextStyle}
           commanBtnStyle={styles.twoBtnStyle}
         />
         <CommanBtnScreen
           btnText="Next"
-          onBtnPress={() => updateUserLanguage('social')}
+          onBtnPress={nextStep}
           commanBtnTextStyle={styles.commanBtnTextStyle}
           commanBtnStyle={[styles.twoBtnStyle, styles.btnBg]}
         />
       </View>
-
-      {/* Status Modal */}
-      <StatusModal
-        visible={modalVisible}
-        type={modalType}
-        message={modalMessage}
-        onClose={handleModalClose}
-      />
     </Container>
   );
 };

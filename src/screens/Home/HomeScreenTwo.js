@@ -7,21 +7,36 @@ import SnapScrolling from '../../components/SnapScrolling/SnapScrolling';
 import { Container, Content } from '../../components';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import GetUserDashboard from '../../api/GetUserDashboard';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import PostFavRequest from '../../api/PostFavRequest';
 import PostUserCancelLike from '../../api/PostUserCancelLike';
 import { isIphoneX } from '../../libs/Utils';
 import { cancelRequest, expressinterest, getUserAllDetails, getUserBasicInformation } from '../../api/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+import { getUserInfo } from '../../redux/actions/userDetailsActions';
+import commonrequest from '../../api/commonrequest';
+import { setPreDefineState } from '../../redux/reducers/perDefineListReducer';
+import { profiledropdownUrl } from '../../api/const';
 
 const { height } = Dimensions.get('window');
 
 const HomeScreenTwo = () => {
   const tabHeight = isIphoneX() ? 110 : 92;
   const tabContainerHeight = height - tabHeight;
-  const token = useSelector((state) => state.auth.user.access_token);
+  const dispatch = useDispatch();
+  const token = useSelector(state => state.auth.token);
+  useEffect(() => {
+    getProfile()
+  }, []);
 
+  const getProfile = async () => {
+    const token = await AsyncStorage.getItem('UserToken');
+    const response = await commonrequest("GET", profiledropdownUrl, "", token,)
+    console.log('response :',response);
+    
+    dispatch(setPreDefineState(response?.data))
+  };
   const [initialLoader, setInitialLoader] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pageNo, setPageNo] = useState(1);
@@ -35,26 +50,17 @@ const HomeScreenTwo = () => {
     useCallback(() => {
       if (token) {
         getUserDashboard(1);
-        MyProfile()
+        getProfile()
       }
       return () => {
       };
     }, [token,])
   )
-  const MyProfile = async () => {
-    try {
-      const response = await getUserAllDetails(token);
-      console.log('response getUserBasicInformation', response);
-
-      if (response?.result) {
-        await AsyncStorage.setItem('UserInfo', JSON.stringify(response.data));
-      } else {
-
-      }
-    } catch (err) {
-
+  useEffect(() => {
+    if (token) {
+      dispatch(getUserInfo(token));
     }
-  };
+  }, [token]);
 
 
   const getUserDashboard = async (page, perPage = 5) => {
@@ -66,8 +72,6 @@ const HomeScreenTwo = () => {
         perPage,
       });
 
-      console.log('response getUserDashboard', response);
-
       if (response?.success) {
         setDashboardData((prev) =>
           page === 1
@@ -77,11 +81,10 @@ const HomeScreenTwo = () => {
         setTotalPages(response.data.total_pages);
         setPageNo(page);
       } else {
-        allertMessage('Error', response?.message || 'Something went wrong');
+        // allertMessage('Error', response?.message || 'Something went wrong');
       }
     } catch (err) {
-      console.log('API Error:', err);
-      allertMessage('Error', 'Failed to load data');
+      // allertMessage('Error', 'Failed to load data');
     } finally {
       setLoading(false);
       setInitialLoader(false);
@@ -92,7 +95,7 @@ const HomeScreenTwo = () => {
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
     setPageNo(1);
-    getUserDashboard(1); // हमेशा page 1 से fresh data
+    getUserDashboard(1); 
   }, [token]);
 
   const loadMore = () => {
@@ -102,7 +105,7 @@ const HomeScreenTwo = () => {
   };
 
   const allertMessage = (heading, message) => {
-    Alert.alert(heading, message);
+    // Alert.alert(heading, message);
   };
 
 
@@ -128,7 +131,6 @@ const HomeScreenTwo = () => {
         });
       }
     } catch (err) {
-      console.log('API Error:', err);
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -141,8 +143,6 @@ const HomeScreenTwo = () => {
   const handleFavRequest = async (userId) => {
     try {
       const response = await PostFavRequest({ token, userId });
-      console.log('response PostFavRequest', response);
-
       if (response && response.success) {
         updateStatus(userId, 'shortlist_status');
         Toast.show({
@@ -159,7 +159,6 @@ const HomeScreenTwo = () => {
       }
 
     } catch (err) {
-      console.log('API Error:', err);
       // allertMessage('Error', 'Failed to send Like');
     }
   };
@@ -170,8 +169,6 @@ const HomeScreenTwo = () => {
     try {
       const token = await AsyncStorage.getItem('UserToken');
       const response = await cancelRequest(data, token);
-      console.log('response PostUserCancelRequest:', response);
-
       if (response && response.success) {
         updateStatus(userId, 'express_interest_status');
         Toast.show({
@@ -188,7 +185,6 @@ const HomeScreenTwo = () => {
       }
 
     } catch (err) {
-      console.log('API Error:', err);
       // allertMessage('Error', 'Connect to help center');
     }
   };
@@ -196,7 +192,8 @@ const HomeScreenTwo = () => {
   const handleCancelFavRequest = async (userId) => {
     try {
       const response = await PostUserCancelLike({ token, userId });
-      console.log('response PostUserCancelLike:', response);
+      console.log('response :',response);
+      
       if (response && response.success) {
         updateStatus(userId, 'shortlist_status');
         Toast.show({
@@ -213,8 +210,7 @@ const HomeScreenTwo = () => {
       }
 
     } catch (err) {
-      console.log('API Error:', err);
-      allertMessage('Error', 'Failed to send Dislike');
+      // allertMessage('Error', 'Failed to send Dislike');
     }
   };
 
@@ -230,11 +226,12 @@ const HomeScreenTwo = () => {
   };
 
   return (
-    <Container>
+    <Container transparentStatusBar={true}   >
       <Content
         isBottomSheet
         scrollEventThrottle={16}
-        snapToInterval={tabContainerHeight}>
+        // snapToInterval={tabContainerHeight}
+        >
         <SnapScrolling
           data={dashboardData}
           loadMore={loadMore}

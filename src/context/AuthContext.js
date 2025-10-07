@@ -6,7 +6,7 @@ import { restoreSession, logout as reduxLogout } from '../redux/reducers/authRed
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // null = loading
+  const [isAuthenticated, setIsAuthenticated] = useState(null); 
   const dispatch = useDispatch();
 
   useEffect(() => {

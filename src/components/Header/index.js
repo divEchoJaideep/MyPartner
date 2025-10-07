@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, StatusBar, TouchableOpacity } from 'react-native';
+import { View, Image, StatusBar, TouchableOpacity, Text } from 'react-native'; // ✅ Added Text
 import styles from './Styles';
 import HeaderLeft from './Left';
 import HeaderLeftLoaction from './LeftLocation';
@@ -22,9 +22,10 @@ export default class Header extends React.PureComponent {
       style,
       children,
       transparent,
-      absolute,   // ✅ new prop
+      absolute,
       hasBackBtn,
       hasLocation,
+      hasHomeBTN,
       navigation,
       title,
       titleStyle,
@@ -37,6 +38,8 @@ export default class Header extends React.PureComponent {
       onFilterBtnPress,
       textRight,
       onTextRightBtnPress,
+      hasMoreBTN,
+     
     } = this.props;
 
     return (
@@ -52,8 +55,8 @@ export default class Header extends React.PureComponent {
             styles.header,
             style,
             transparent && styles.transparent,
-            absolute && { 
-              position: 'absolute', // ✅ overlap mode
+            absolute && {
+              position: 'absolute',
               top: 0,
               left: 0,
               right: 0,
@@ -133,6 +136,31 @@ export default class Header extends React.PureComponent {
               onTextRightBtnPress={() => {
                 if (onTextRightBtnPress) {
                   onTextRightBtnPress();
+                }
+              }}
+            />
+          )}
+
+          {hasHomeBTN && (
+            <HeaderRight
+              hasHomeBTN
+              onHomeBTN={() => {
+                if (this.props.onHomeBTN) {
+                  this.props.onHomeBTN();
+                } else if (navigation) {
+                  navigation.navigate('Dashboard', { screen: 'Profile' });
+                }
+              }}
+            />
+          )}
+
+
+          {hasMoreBTN && (
+            <HeaderRight
+              hasMoreBTN
+              onMoreBTN={() => {
+                if (this.props.onMoreBTN) {
+                  this.props.onMoreBTN();
                 }
               }}
             />

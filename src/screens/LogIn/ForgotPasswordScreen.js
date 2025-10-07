@@ -43,7 +43,7 @@ function ForgotPasswordScreen({ navigation }) {
   }
 
   return (
-    <Container>
+    <Container transparentStatusBar={true}>
       <Content hasHeader contentContainerStyle={styles.container}>
         <LogoHeading heading="Forgot Password" />
         <View style={styles.signupLoginInputGroup}>

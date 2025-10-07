@@ -1,22 +1,16 @@
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { Container, Content, Header } from '../../components';
 import CommanBtnScreen from '../../components/CommanBtn';
 import styles from './Styles/ProfileStyle';
-import CommanText from '../../components/CommanText';
 import { useNavigation } from '@react-navigation/native';
 import SelectDropdown from '../../components/SelectDropdown/Select';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  getCasteByRelisionCaste,
-  getReligionCasteByRelisionId,
-  getSubCasteByCaste,
-} from '../../redux/actions/userDetailsActions';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getUserAllDetails, updateUserSocial } from '../../api/api';
+
+import StatusModal from '../../components/StatusModal/StatusModal';
 import Error from '../../components/Error';
 import Loading from '../../components/Loading';
-import StatusModal from '../../components/StatusModal/StatusModal';
+import { getCasteByRelisionCaste, getReligionCasteByRelisionId, getSubCasteByCaste, updateReligionAndCulture, } from '../../redux/actions/userDetailsActions';
 
 const SocialBackground = () => {
   const navigation = useNavigation();
@@ -24,228 +18,148 @@ const SocialBackground = () => {
 
   const { family_value_list, religion_list, religionCaste, caste, subCaste } =
     useSelector(state => state.preList);
+  const userReligionInfo = useSelector(state => state.userDetails.userReligion);
+  const token = useSelector(state => state.auth.token);
 
-  const { loading } = useSelector(state => state.userDetails);
-
-  const [error, setError] = useState('');
-  const [data, setData] = useState({
+  const [formData, setFormData] = useState({
     member_religion_id: '',
     member_religion_caste_id: '',
     member_caste_id: '',
     member_sub_caste_id: '',
-    // family_value_id: '',
   });
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState('');
   const [modalMessage, setModalMessage] = useState('');
-  const [nextScreen, setNextScreen] = useState(null); 
+  const [nextScreen, setNextScreen] = useState(null);
 
+  // Fetch user data on mount
   useEffect(() => {
-    getUserFullDetails();
+    fetchUserDetails();
   }, []);
 
-  const getUserFullDetails = async () => {
+  const fetchUserDetails = async () => {
     try {
-      const token = await AsyncStorage.getItem('UserToken');
-      const res = await getUserAllDetails(token);
+      const religionData = userReligionInfo
 
-      if (res.success) {
-        const religionData = res?.data?.religion || {};
+      setFormData({
+        member_religion_id: religionData.member_religion_id || '',
+        member_religion_caste_id: religionData.member_religion_caste_id || '',
+        member_caste_id: religionData.member_caste_id || '',
+        member_sub_caste_id: religionData.member_sub_caste_id || '',
+      });
 
-        setData({
-          member_religion_id: religionData.member_religion_id || '',
-          member_religion_caste_id: religionData.member_religion_caste_id || '',
-          member_caste_id: religionData.member_caste_id || '',
-          member_sub_caste_id: religionData.member_sub_caste_id || '',
-          // family_value_id: religionData.family_value_id || '',
-        });
 
-        // Pre-load dependent dropdowns
-        if (religionData.member_religion_id) {
-          dispatch(getReligionCasteByRelisionId(religionData.member_religion_id, token));
-        }
-        if (religionData.member_religion_caste_id) {
-          dispatch(getCasteByRelisionCaste(religionData.member_religion_caste_id, token));
-        }
-        if (religionData.member_caste_id) {
-          dispatch(getSubCasteByCaste(religionData.member_caste_id, token));
-        }
-      } else {
-        setError(res.message || 'Failed to fetch user details');
+      if (religionData.member_religion_id) {
+        dispatch(getReligionCasteByRelisionId(religionData.member_religion_id, token));
+      }
+      if (religionData.member_religion_caste_id) {
+        dispatch(getCasteByRelisionCaste(religionData.member_religion_caste_id, token));
+      }
+      if (religionData.member_caste_id) {
+        dispatch(getSubCasteByCaste(religionData.member_caste_id, token));
       }
     } catch (err) {
-      setError('Something went wrong');
+      console.log('Error fetching user details: ', err);
     }
   };
 
-  const onReligionChange = async religionID => {
-    setData({
-      ...data,
-      member_religion_id: religionID,
-      member_religion_caste_id: '',
-      member_caste_id: '',
-      member_sub_caste_id: '',
-    });
-    const token = await AsyncStorage.getItem('UserToken');
-    dispatch(getReligionCasteByRelisionId(religionID, token));
+  const handleChange = (key, value) => setFormData(prev => ({ ...prev, [key]: value }));
+
+  const onReligionChange = async (id) => {
+    handleChange('member_religion_id', id);
+    handleChange('member_religion_caste_id', '');
+    handleChange('member_caste_id', '');
+    handleChange('member_sub_caste_id', '');
+    dispatch(getReligionCasteByRelisionId(id, token));
   };
 
-  const onReligionCasteChange = async casteID => {
-    setData({
-      ...data,
-      member_religion_caste_id: casteID,
-      member_caste_id: '',
-      member_sub_caste_id: '',
-    });
-    const token = await AsyncStorage.getItem('UserToken');
-    dispatch(getCasteByRelisionCaste(casteID, token));
+  const onReligionCasteChange = async (id) => {
+    handleChange('member_religion_caste_id', id);
+    handleChange('member_caste_id', '');
+    handleChange('member_sub_caste_id', '');
+    dispatch(getCasteByRelisionCaste(id, token));
   };
 
-  const onCasteChange = async subCasteID => {
-    setData({
-      ...data,
-      member_caste_id: subCasteID,
-      member_sub_caste_id: '',
-    });
-    const token = await AsyncStorage.getItem('UserToken');
-    dispatch(getSubCasteByCaste(subCasteID, token));
+  const onCasteChange = async (id) => {
+    handleChange('member_caste_id', id);
+    handleChange('member_sub_caste_id', '');
+    dispatch(getSubCasteByCaste(id, token));
   };
 
-  const handleTextChange = (key, value) => {
-    setData({ ...data, [key]: value });
-  };
-
-  // save button
   const saveData = async () => {
     try {
-      const token = await AsyncStorage.getItem('UserToken');
-      const res = await updateUserSocial(data, token);
-
+      const res = await dispatch(updateReligionAndCulture(formData, token));
       if (res.success) {
-        setModalType('success');
-        setModalMessage(res.message || 'Social background updated successfully!');
-        setNextScreen({ name: 'Dashboard', params: { screen: 'Profile' } });
-      } else {
-        setModalType('error');
-        setModalMessage(res.message || 'Something went wrong');
-        setNextScreen(null);
+        navigation.navigate({ name: 'Dashboard', params: { screen: 'Profile' } });
       }
-      setModalVisible(true);
-    } catch (err) {
-      setModalType('error');
-      setModalMessage('API call failed!');
-      setModalVisible(true);
-    }
+    } catch (err) { }
   };
 
-  // next button
-  const NextBtn = async () => {
+  const nextStep = async () => {
     try {
-      const token = await AsyncStorage.getItem('UserToken');
-      const res = await updateUserSocial(data, token);
-
-      if (res.success) {
-        setModalType('success');
-        setModalMessage(res.message || 'Social background updated successfully!');
-        setNextScreen({ name: 'identityVerification' });
-      } else {
-        setModalType('error');
-        setModalMessage(res.message || 'Something went wrong');
-        setNextScreen(null);
-      }
-      setModalVisible(true);
-    } catch (err) {
-      setModalType('error');
-      setModalMessage('API call failed!');
-      setModalVisible(true);
-    }
+      const res = await dispatch(updateReligionAndCulture(formData, token));
+      if (res.success) navigation.navigate('identityVerification');
+    } catch (err) { }
   };
 
   return (
-    <Container>
+    <Container paddingBottomContainer={true}>
       <Header
         transparent
         hasBackBtn
         title="Religious & Cultural Identity"
+        hasHomeBTN
+        onHomeBTN={() => navigation.navigate('Dashboard', { screen: 'Profile' })}
         onBackPress={() => navigation.goBack()}
       />
       <Content contentContainerStyle={styles.container}>
-        <Error error={error} />
-        <Loading loading={loading} />
+
 
         <View style={styles.inputView}>
-          {/* Religion */}
           <SelectDropdown
             data={religion_list ?? []}
-            value={data?.member_religion_id}
+            value={formData.member_religion_id}
             label="Religion"
             placeholder="Select Religion"
-            onSelectChange={value => onReligionChange(value)}
+            onSelectChange={onReligionChange}
           />
-
-          {/* Categories */}
           <SelectDropdown
             data={religionCaste ?? []}
-            value={data?.member_religion_caste_id}
+            value={formData.member_religion_caste_id}
             label="Categories"
             placeholder="Select Category"
-            onSelectChange={value => onReligionCasteChange(value)}
+            onSelectChange={onReligionCasteChange}
           />
-
-          {/* Caste */}
           <SelectDropdown
             data={caste ?? []}
-            value={data?.member_caste_id}
+            value={formData.member_caste_id}
             label="Caste"
             placeholder="Select Caste"
-            onSelectChange={value => onCasteChange(value)}
+            onSelectChange={onCasteChange}
           />
-
-          {/* Sub Caste */}
           <SelectDropdown
             data={subCaste ?? []}
-            value={data?.member_sub_caste_id}
+            value={formData.member_sub_caste_id}
             label="Sub Caste"
             placeholder="Select Sub Caste"
-            onSelectChange={value => handleTextChange('member_sub_caste_id', value)}
+            onSelectChange={(value) => handleChange('member_sub_caste_id', value)}
           />
         </View>
-
-        {/* Buttons */}
       </Content>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 10,
-          }}
-        >
-          <CommanBtnScreen
-            btnText="Save"
-            onBtnPress={saveData}
-            commanBtnTextStyle={styles.commanBtnTextStyle}
-            commanBtnStyle={styles.twoBtnStyle}
-          />
-          <CommanBtnScreen
-            btnText="Next"
-            onBtnPress={NextBtn}
-            commanBtnTextStyle={styles.commanBtnTextStyle}
-            commanBtnStyle={[styles.twoBtnStyle, styles.btnBg]}
-          />
-        </View>
 
-      {/* Status Modal */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+        <CommanBtnScreen btnText="Save" onBtnPress={saveData} commanBtnTextStyle={styles.commanBtnTextStyle} commanBtnStyle={styles.twoBtnStyle} />
+        <CommanBtnScreen btnText="Next" onBtnPress={nextStep} commanBtnTextStyle={styles.commanBtnTextStyle} commanBtnStyle={[styles.twoBtnStyle, styles.btnBg]} />
+      </View>
+
       <StatusModal
         visible={modalVisible}
         type={modalType}
         message={modalMessage}
         onClose={() => {
           setModalVisible(false);
-          if (modalType === 'success' && nextScreen) {
-            navigation.navigate(nextScreen.name, nextScreen.params);
-          }
+          if (modalType === 'success' && nextScreen) navigation.navigate(nextScreen.name, nextScreen.params);
         }}
       />
     </Container>

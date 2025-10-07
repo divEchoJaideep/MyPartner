@@ -1,3 +1,4 @@
+import Toast from 'react-native-toast-message';
 import commonrequest from "../../api/commonrequest";
 import {
   basicinfo,
@@ -11,7 +12,9 @@ import {
   district,
   updateAddress,
   updateEducation,
-  updateCareer
+  updateCareer,
+  updateLanguage,
+  idProff
 } from "../../api/const";
 import {
   start,
@@ -25,6 +28,9 @@ import {
   frontPhoto,
   backPhoto,
   verificationIds,
+  setUserLanguage,
+  setVerification,
+  updateVerification,
 } from "../reducers/userDetailsReducer";
 
 import {
@@ -34,17 +40,87 @@ import {
   setCityList,
 } from "../reducers/perDefineListReducer";
 import { Alert } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
+export const getUserInfo = (token) => async (dispatch) => {
+  try {
+    dispatch(start());
+    const response = await commonrequest("GET", getUserDetails, "", token);
+    console.log("response getUserDetails :", response);
+
+    if (!response.success) throw new Error(response.message);
+
+    const userData = {
+      basic_details: response?.data.basic_details,
+      address: response?.data.address,
+      education: response?.data.education,
+      career: response?.data.career,
+      physical_attribute: response?.data?.physical_atribute,
+      gallery: response?.data?.gallery || [], // add gallery here
+      // language: response?.data.language,
+      religion: response?.data.religion,
+      verification: response?.data.verification,
+    };
+console.log('userData useDeatialsAction :',userData);
+
+    dispatch(basicInfo(userData.basic_details));
+    dispatch(address(userData.address));
+    dispatch(education(userData.education));
+    dispatch(careerInfo(userData.career));
+    dispatch(physicalAttribute(userData.physical_attribute));
+    dispatch(religionAndCultural(userData.religion));
+    //  dispatch(setGalleryImages(userData.gallery));
+    dispatch(setVerification(userData.verification || {
+      document_type: null,
+      front_photo: null,
+      back_photo: null,
+    }));
+
+
+    await AsyncStorage.setItem("UserInfo", JSON.stringify(userData));
+
+  } catch (error) {
+    console.log("Error: ", error);
+    dispatch(failure(error.message));
+  }
+};
+
 
 export const updateUserBasicInfo = (data, token) => async (dispatch) => {
+  console.log('data :',data);
+  
   try {
     dispatch(start());
     const response = await commonrequest("POST", basicinfo, data, token);
-    console.log("response: ", response);
-    Alert.alert('Alert', response.message)
+console.log('response profile :',response);
+
     if (!response.success) throw new Error(response.message);
+
     dispatch(basicInfo(data));
+
+    Toast.show({
+      type: 'success',
+      text1: 'Success',
+      text2: response.message || 'Profile updated successfully!',
+      // position: 'bottom',
+      // visibilityTime: 2000,
+    });
+
+    return response;
+
   } catch (error) {
     dispatch(failure(error.message));
+
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: error.message || 'Something went wrong!',
+      // position: 'bottom',
+      // visibilityTime: 2000,
+    });
+
+    throw error;
   }
 };
 
@@ -77,43 +153,7 @@ export const updateUserIdentityImage = (key, data, token) => async (dispatch) =>
   }
 };
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const getUserInfo = (token) => async (dispatch) => {
-  try {
-    const response = await commonrequest("GET", getUserDetails, "", token);
-    console.log("response getUserDetails :", response);
-
-    if (!response.success) throw new Error(response.message);
-
-    const userData = {
-      basic_details: response?.data.basic_details,
-      address: response?.data.address,
-      education: response?.data.education,
-      career: response?.data.career,
-      physical_attribute: response?.data.physical_atribute,
-      // language: response?.data.language,
-      // religion: response?.data.religion,
-      // verification: response?.data.verification,
-    };
-
-    dispatch(basicInfo(userData.basic_details));
-    dispatch(address(userData.address));
-    dispatch(education(userData.education));
-    dispatch(careerInfo(userData.career));
-    dispatch(physicalAttribute(userData.physical_attribute));
-    // dispatch(userLanguage(userData.language));
-    // dispatch(religion(userData.religion));
-    // dispatch(verificationIds(userData.verification));
-
-    // 🔥 AsyncStorage save
-    await AsyncStorage.setItem("UserInfo", JSON.stringify(userData));
-
-  } catch (error) {
-    console.log("Error: ", error);
-    dispatch(failure(error.message));
-  }
-};
 
 export const getReligionCasteByRelisionId = (id, token) => async (dispatch) => {
   try {
@@ -154,9 +194,21 @@ export const updateReligionAndCulture = (data, token) => async (dispatch) => {
     const response = await commonrequest("POST", updateSpiritual, data, token);
     if (!response.success) throw new Error(response.message);
     dispatch(religionAndCultural(data));
+    Toast.show({
+      type: 'success',
+      text1: 'Success',
+      text2: response.message || 'Profile updated successfully!',
+    });
+    return response;
   } catch (error) {
-    console.log("Error: ", error);
     dispatch(failure(error.message));
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: error.message || 'Something went wrong!',
+    });
+
+    throw error;
   }
 };
 
@@ -166,9 +218,24 @@ export const savePhysicalAttribute = (data, token) => async (dispatch) => {
     const response = await commonrequest("POST", updatePhysicalAttributes, data, token);
     if (!response.success) throw new Error(response.message);
     dispatch(physicalAttribute(data));
+    Toast.show({
+      type: 'success',
+      text1: 'Success',
+      text2: response.message || 'Profile updated successfully!',
+    });
+
+    return response;
+
   } catch (error) {
-    console.log("Error: ", error);
     dispatch(failure(error.message));
+
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: error.message || 'Something went wrong!',
+    });
+
+    throw error;
   }
 };
 
@@ -190,8 +257,26 @@ export const saveUserAddress = (data, token) => async (dispatch) => {
     const response = await commonrequest("POST", updateAddress, data, token);
     if (!response.success) throw new Error(response.message);
     dispatch(address(data));
+    Toast.show({
+      type: 'success',
+      text1: 'Success',
+      text2: response.message || 'Address updated successfully!',
+      // position: 'bottom',
+      // visibilityTime: 2000,
+    });
+
+    return response;
   } catch (error) {
     dispatch(failure(error.message));
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: error.message || 'Something went wrong!',
+      // position: 'bottom',
+      // visibilityTime: 2000,
+    });
+
+    throw error;
   }
 };
 
@@ -201,31 +286,98 @@ export const saveUserEducation = (data, token) => async (dispatch) => {
     const response = await commonrequest("POST", updateEducation, data, token);
     if (!response.success) throw new Error(response.message);
     dispatch(education(data));
+    Toast.show({
+      type: 'success',
+      text1: 'Success',
+      text2: response.message || 'Education updated successfully!',
+    });
+
+    return response;
   } catch (error) {
     dispatch(failure(error.message));
+
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: error.message || 'Something went wrong!',
+    });
+
+    throw error;
   }
-};
+}
 
 export const saveUserCareerInfo = (data, token) => async (dispatch) => {
   try {
     dispatch(start());
     const response = await commonrequest("POST", updateCareer, data, token);
-    console.log("response: ", response)
+    console.log("response: ", response);
     if (!response.success) throw new Error(response.message);
+
     dispatch(careerInfo(data));
+    Toast.show({
+      type: "success",
+      text1: "Success",
+      text2: response.message || "Career info updated successfully!",
+    });
+
+    return response;
   } catch (error) {
     dispatch(failure(error.message));
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: error.message || "Something went wrong!",
+    });
+
+    throw error;
   }
 };
 
 export const saveUserVerificationInfo = (data, token) => async (dispatch) => {
   try {
     dispatch(start());
-    const response = await commonrequest("POST", updateCareer, data, token);
+    const response = await commonrequest("POST", idProff, data, token);
     console.log("response: ", response)
     if (!response.success) throw new Error(response.message);
-    dispatch(careerInfo(data));
+    dispatch(updateVerification(data));
+    Toast.show({
+      type: "success",
+      text1: "Success",
+      text2: response.message || "Career info updated successfully!",
+    });
+    return response;
   } catch (error) {
     dispatch(failure(error.message));
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: error.message || "Something went wrong!",
+    });
+    throw error;
+  }
+};
+
+export const saveUserLanguage = (data, token) => async (dispatch) => {
+  try {
+    dispatch(start());
+    const response = await commonrequest("POST", updateLanguage, data, token);
+    if (!response.success) throw new Error(response.message);
+    dispatch(setUserLanguage(data));
+    Toast.show({
+      type: "success",
+      text1: "Success",
+      text2: response.message || "Career info updated successfully!",
+    });
+
+    return response;
+  } catch (error) {
+    dispatch(failure(error.message));
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: error.message || "Something went wrong!",
+    });
+
+    throw error;
   }
 };

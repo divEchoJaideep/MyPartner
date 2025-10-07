@@ -27,7 +27,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const ReceivedRequest = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch()
-  const token = useSelector((state) => state.auth.user.access_token);
+  const token = useSelector(state => state.auth.token);
   const [loading, setLoading] = useState();
   const [error, setError] = useState('');
   const [receivedRequest, setReceivedRequest] = useState([]);
@@ -139,7 +139,7 @@ const ReceivedRequest = () => {
     console.log('item : ', item);
     return (
       <View style={styles.flatlistView}>
-        <TouchableOpacity onPress={() => navigation.navigate('ProfileData')}>
+        <TouchableOpacity onPress={() => navigation.navigate('ProfileData', { userId: item.user_id })}>
           <View style={styles.viewStyle}>
             <Image
               source={item?.photo ? { uri: item?.photo } : Images.userRoundIcon}
@@ -199,9 +199,8 @@ const ReceivedRequest = () => {
   };
 
   return (
-    <Container statusBar={true}>
+    <Container statusBar={true} transparentStatusBar={true}>
       <Content hasHeader contentContainerStyle={styles.container}>
-        <Error error={error} />
         <Loading loading={loading} />
         {receivedRequest.length > 0 ? (
           <FlatList

@@ -1,4 +1,4 @@
-import {updateImages} from './const';
+import { updateImages } from './const';
 
 async function ImagesUpload(props) {
   console.log('props : ', props);
@@ -15,15 +15,17 @@ async function ImagesUpload(props) {
     redirect: 'follow',
   };
 
-  return fetch(updateImages, requestOptions)
-    .then(response => response.text())
-    .then(result => {
-      console.log('response 111 ', result);
-      return result;
-    })
-    .catch(error => {
-      return {success: false, message: 'Error connecting to server'};
-    });
+  const response = await fetch(updateImages, requestOptions);
+  const resultText = await response.text(); // raw string
+  let result;
+  try {
+    result = JSON.parse(resultText); // convert string to object
+  } catch (err) {
+    result = { success: false, message: 'Upload failed' };
+  }
+  console.log('Upload result:', result);
+  return result; // {success: true, message: "...", data: "image url"}
+
 }
 
 export default ImagesUpload;

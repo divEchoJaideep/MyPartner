@@ -10,6 +10,7 @@ import StatusModal from '../../components/StatusModal/StatusModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import ImagePicker from 'react-native-image-crop-picker';
+import ImagesUpload from '../../api/imagesUpload';
 
 const AddPhotoScreen = () => {
   const navigation = useNavigation();
@@ -19,7 +20,7 @@ const AddPhotoScreen = () => {
   const [modalType, setModalType] = useState('');
   const [modalMessage, setModalMessage] = useState('');
   const [actionType, setActionType] = useState('');
-  const [loading, setLoading] = useState(true); // <-- add loading state
+  const [loading, setLoading] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
@@ -27,57 +28,102 @@ const AddPhotoScreen = () => {
     }, [])
   );
 
-  const pickImage = () => {
-    ImagePicker.openPicker({
-      width: 500,
-      height: 500,
-      cropping: true,
-      compressImageQuality: 0.8,
-      mediaType: 'photo',
-    })
-      .then((image) => {
+  const pickImage = async () => {
+    const remainingSlots = 6 - uploadedPhotos.length;
+    if (remainingSlots <= 0) {
+      Toast.show({
+        type: 'info',
+        text1: 'Limit Reached',
+        text2: 'You can only upload 6 images.',
+      });
+      return;
+    }
+
+    try {
+      const images = await ImagePicker.openPicker({
+        width: 500,
+        height: 500,
+        cropping: true,
+        compressImageQuality: 0.8,
+        mediaType: 'photo',
+        multiple: true,
+      });
+
+      const selectedImages = Array.isArray(images) ? images : [images];
+
+      selectedImages.slice(0, remainingSlots).forEach(img =>
         addImage({
-          uri: image.path,
-          fileName: image.filename || `photo_${Date.now()}.jpg`,
-        });
-      })
-      .catch((err) => console.log('ImagePicker Error:', err));
+          uri: img.path,
+          fileName: img.filename || `photo_${Date.now()}.jpg`,
+        })
+      );
+    } catch (err) {
+      console.log('ImagePicker Error:', err);
+    }
   };
 
-  const addImage = (image) => {
+  const addImage = async (image) => {
     if (!image) return;
+
+    const remainingSlots = 6 - uploadedPhotos.length;
+    if (remainingSlots <= 0) {
+      Toast.show({
+        type: 'info',
+        text1: 'Limit Reached',
+        text2: 'You can only upload 6 images.',
+      });
+      return;
+    }
 
     const uri = image.uri;
     const fileName = image.fileName || uri.split('/').pop();
 
-    setUploadedPhotos((prev) => {
-      if (prev.some((img) => img.uri === uri)) {
-        return prev;
-      }
-      if (prev.length >= 6) {
-        Toast.show({
-          type: 'info',
-          text1: 'Limit Reached',
-          text2: 'You can only upload 6 images.',
-        });
-        return prev;
-      }
+    const newPhoto = {
+      id: Date.now().toString() + Math.random().toString(),
+      uri,
+      fileName,
+      isNew: true,
+    };
 
-      return [
-        ...prev,
-        {
-          id: Date.now().toString() + Math.random().toString(),
-          uri,
-          fileName,
-          isNew: true,
-        },
-      ];
+    // Optimistically add
+    setUploadedPhotos(prev => {
+      const total = prev.length;
+      if (total >= 6) return prev;
+      return [...prev, newPhoto];
     });
+
+    const token = await AsyncStorage.getItem('UserToken');
+
+    const result = await ImagesUpload({
+      token,
+      uploadImage: {
+        uri: newPhoto.uri,
+        name: newPhoto.fileName,
+        type: 'image/jpeg',
+      },
+    });
+
+    if (result.success) {
+      getMyPersonalImages();
+      Toast.show({
+        type: 'success',
+        text1: 'Uploaded',
+        text2: result?.message || 'Photo uploaded successfully!',
+      });
+      
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Upload Failed',
+        text2: result?.message || 'Something went wrong',
+      });
+      setUploadedPhotos(prev => prev.filter(p => p.id !== newPhoto.id));
+    }
   };
 
   const getMyPersonalImages = async () => {
     try {
-      setLoading(true); // start loader
+      setLoading(true);
       const token = await AsyncStorage.getItem('UserToken');
       const response = await GetPersonalImages(token);
 
@@ -91,7 +137,7 @@ const AddPhotoScreen = () => {
     } catch (error) {
       console.error('Error fetching personal images:', error);
     } finally {
-      setLoading(false); // stop loader
+      setLoading(false);
     }
   };
 
@@ -120,11 +166,13 @@ const AddPhotoScreen = () => {
   };
 
   return (
-    <Container>
+    <Container paddingBottomContainer={true}>
       <Header
         transparent
         title="Add Photos"
         hasBackBtn
+        hasHomeBTN
+        onHomeBTN={() => navigation.navigate('Dashboard', { screen: 'Profile' })}
         onBackPress={() => navigation.goBack()}
       />
       <Content hasHeader contentContainerStyle={styles.container}>
@@ -144,43 +192,44 @@ const AddPhotoScreen = () => {
         >
           {loading
             ? Array.from({ length: 6 }).map((_, index) => (
-                <View
-                  key={`loader-${index}`}
+              <View
+                key={`loader-${index}`}
+                style={{
+                  width: 100,
+                  height: 100,
+                  marginBottom: 10,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: '#ccc',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <ActivityIndicator size="small" color="#000" />
+              </View>
+            ))
+            : uploadedPhotos.map((photo) => (
+              <View key={photo.id} style={{ position: 'relative', marginBottom: 10 }}>
+                <Image
+                  source={{ uri: photo.uri }}
+                  style={{ width: 100, height: 100, borderRadius: 10 }}
+                />
+                <TouchableOpacity
+                  onPress={() => handleDeleteImage(photo.id)}
                   style={{
-                    width: 100,
-                    height: 100,
-                    marginBottom: 10,
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: '#ccc',
-                    justifyContent: 'center',
-                    alignItems: 'center',
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    borderRadius: 12,
+                    paddingVertical: 3,
+                    paddingHorizontal: 7,
                   }}
                 >
-                  <ActivityIndicator size="small" color="#000" />
-                </View>
-              ))
-            : uploadedPhotos.map((photo) => (
-                <View key={photo.id} style={{ position: 'relative', marginBottom: 10 }}>
-                  <Image
-                    source={{ uri: photo.uri }}
-                    style={{ width: 100, height: 100, borderRadius: 10 }}
-                  />
-                  <TouchableOpacity
-                    onPress={() => handleDeleteImage(photo.id)}
-                    style={{
-                      position: 'absolute',
-                      top: 5,
-                      right: 5,
-                      backgroundColor: 'rgba(0,0,0,0.6)',
-                      borderRadius: 12,
-                      padding: 4,
-                    }}
-                  >
-                    <Text style={{ color: 'white', fontSize: 12 }}>X</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
+                  <Text style={{ color: 'white', fontSize: 12 }}>X</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
 
           {!loading &&
             Array.from({ length: 6 - uploadedPhotos.length }).map((_, index) => (
@@ -204,18 +253,17 @@ const AddPhotoScreen = () => {
         </View>
       </Content>
 
-      {/* Save & Next Buttons */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between',gap:10 }}>
         <CommanBtnScreen
           btnText="Save"
-          onBtnPress={() => console.log('Save pressed')}
+          onBtnPress={() => navigation.navigate('Dashboard', { screen: 'Profile' })}
           commanBtnTextStyle={styles.commanBtnTextStyle}
           commanBtnStyle={styles.twoBtnStyle}
         />
 
         <CommanBtnScreen
           btnText="Next"
-          onBtnPress={() => console.log('Next pressed')}
+          onBtnPress={() => navigation.navigate('PresentAddress')}
           commanBtnTextStyle={styles.commanBtnTextStyle}
           commanBtnStyle={[styles.twoBtnStyle, styles.btnBg]}
         />

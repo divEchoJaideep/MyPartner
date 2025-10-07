@@ -9,7 +9,7 @@ import {navigate} from '../../navigation/ReduxNavigation';
 
 function ResetPasswordScreen({navigation}) {
   return (
-    <Container>
+    <Container transparentStatusBar={true}>
       <Header
         transparent
         hasBackBtn

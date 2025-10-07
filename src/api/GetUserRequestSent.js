@@ -1,7 +1,6 @@
 import {userRequestSent} from './const';
 
 async function GetUserRequestSent(props) {
-  console.log('props:', props);
   var myHeaders = new Headers();
   myHeaders.append('Authorization', `Bearer ${props.token}`);
   var requestOptions = {
@@ -13,7 +12,6 @@ async function GetUserRequestSent(props) {
   return fetch(userRequestSent, requestOptions)
     .then(response => response.json())
     .then(result => {
-      console.log('result :', result);
       return result;
     })
     .catch(error => {

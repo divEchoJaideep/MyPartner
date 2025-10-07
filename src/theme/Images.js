@@ -56,13 +56,18 @@ const ShareFillIcon = require('../assets/images/ShareFillIcon.png');
 const PapperMapIcon = require('../assets/images/PapperMapIcon.png');
 const photoScanRingIcon = require('../assets/images/photoScanRingIcon.png');
 const FilterIcon = require('../assets/images/FilterIcon.png');
+const More = require('../assets/images/more.png');
 const location = require('../assets/images/location.png');
 const rightWhiteArrow = require('../assets/images/rightWhiteArrow.png');
 const ChatSendBtn = require('../assets/images/ChatSendBtn.png');
 const Welcome = require('../assets/images/Welcome.png');
- const bgImage = require('../assets/images/bg_img.png'); 
+const Gift = require('../assets/images/gift.png');
+const Group = require('../assets/images/group.png');
+const Besafe =  require('../assets/images/besafe.png');
+const Lock = require('../assets/images/lock.png');
+//  const bgImage = require('../assets/images/bg_img.png'); 
 // const bgImage2 = require('../assets/images/bg_img2.png');
-const Home = require('../assets/images/Home.png');
+const Home = require('../assets/images/home.png');
 // const yellowCheckIcon = require('../assets/images/yellowCheckIcon.png');
 const CheckBlack = require('../assets/images/checkBlack.png');
 const CheckWhite = require('../assets/images/checkWhite.png');
@@ -71,11 +76,24 @@ const PlayIcon = require('../assets/images/play.png');
 const StoryPlaceholder = require('../assets/images/story.png');
 const BlockedUser = require('../assets/images/blockuser.png');
 const VerifyIconDoc = require('../assets/images/verifiedDoc.png');
-
+const ChatBTN = require('../assets/images/bubblechat.png');
+const Like = require('../assets/images/heart.png');
+const UnLike = require('../assets/images/heartACT.png');
+const Follow = require('../assets/images/add-user.png');
+const UnFollow = require('../assets/images/unfolow.png');
 
 export {
+  Besafe,
+  Lock,
+  More,
+  Gift,
+  Group,
+  Like,
+  UnLike,
+  Follow,
+  UnFollow,
   VerifyIconDoc,
-  bgImage,
+  // bgImage,
   AddIcon,
   StoryPlaceholder,
   PlayIcon,
@@ -145,6 +163,7 @@ export {
   rightWhiteArrow,
   ChatSendBtn,
   Home,
-  yellowCheckIcon
+  ChatBTN,
+  // yellowCheckIcon
   
 };

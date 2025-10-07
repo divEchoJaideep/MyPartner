@@ -1,6 +1,6 @@
 import React from 'react';
-import {Text, Image, TouchableOpacity} from 'react-native';
-import {Images} from '../../theme';
+import { Text, Image, TouchableOpacity } from 'react-native';
+import { Images } from '../../theme';
 import styles from './Styles';
 
 function HeaderRight({
@@ -11,26 +11,18 @@ function HeaderRight({
   clearText,
   onclearTextPress,
   textRight,
+  hasHomeBTN,
+  onHomeBTN,
   onTextRightBtnPress,
+  hasMoreBTN,
+  onMoreBTN
 }) {
   return (
     <>
-      {/* // <View style={[styles.right, style]}>
-    //   <Text numberOfLines={1} style={styles.txtChildren}>
-    //     {children}
-    //   </Text>
-    //   <Text numberOfLines={1} style={styles.textSubChild}>
-    //     of 4
-    //   </Text>
-    // </View> */}
       {userImage && (
         <TouchableOpacity
           style={styles.userRightImageBtn}
-          onPress={() => {
-            if (onProfilePress) {
-              onProfilePress();
-            }
-          }}>
+          onPress={onProfilePress}>
           <Image
             source={Images.UserImage}
             resizeMode="contain"
@@ -38,14 +30,11 @@ function HeaderRight({
           />
         </TouchableOpacity>
       )}
+
       {filterBtn && (
         <TouchableOpacity
           style={styles.filterBtn}
-          onPress={() => {
-            if (onFilterBtnPress) {
-              onFilterBtnPress();
-            }
-          }}>
+          onPress={onFilterBtnPress}>
           <Image
             source={Images.FilterIcon}
             resizeMode="contain"
@@ -53,25 +42,41 @@ function HeaderRight({
           />
         </TouchableOpacity>
       )}
+
+      {hasHomeBTN && (
+        <TouchableOpacity
+          style={styles.Home}
+          onPress={onHomeBTN}>
+          <Image
+            source={Images.Home} 
+            resizeMode="contain"
+            style={styles.homeBTN}
+          />
+        </TouchableOpacity>
+      )}
+ {hasMoreBTN && (
+        <TouchableOpacity
+          style={styles.Home}
+          onPress={onMoreBTN}>
+          <Image
+            source={Images.More} 
+            resizeMode="contain"
+            style={styles.homeBTN}
+          />
+        </TouchableOpacity>
+      )}
       {clearText && (
         <TouchableOpacity
           style={styles.clearTextBtn}
-          onPress={() => {
-            if (onclearTextPress) {
-              onclearTextPress();
-            }
-          }}>
+          onPress={onclearTextPress}>
           <Text style={styles.clearText}>Clear</Text>
         </TouchableOpacity>
       )}
+
       {textRight && (
         <TouchableOpacity
           style={styles.textRightBtn}
-          onPress={() => {
-            if (onTextRightBtnPress) {
-              onTextRightBtnPress();
-            }
-          }}>
+          onPress={onTextRightBtnPress}>
           <Text style={styles.rightText}>Skip</Text>
         </TouchableOpacity>
       )}

@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { Container, Content, Header } from '../../components';
 import TextInputScreen from '../../components/SignUpLogIn/TextInput';
@@ -10,37 +10,30 @@ import SelectDropdown from '../../components/SelectDropdown/Select';
 import { useDispatch, useSelector } from 'react-redux';
 import Error from '../../components/Error';
 import Loading from '../../components/Loading';
-import { updateUserCureer } from '../../api/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import StatusModal from '../../components/StatusModal/StatusModal';
+import { saveUserCareerInfo } from '../../redux/actions/userDetailsActions';
 
 const CareerScreen = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch()
-  const token = useSelector((state) => state.auth.user.access_token)
+  const dispatch = useDispatch();
+
+  const token = useSelector(state => state.auth.token);
   const jobtype_list = useSelector((state) => state.preList.jobtype_list);
   const userCareerInfo = useSelector((state) => state.userDetails.userCareerInfo);
   const loading = useSelector((state) => state.userDetails.loading);
+  const error = useSelector((state) => state.userDetails.error);
 
-  const [error, setError] = useState('');
   const [data, setData] = useState({
     job_type: '',
     work_field: '',
     income: '',
   });
 
-  // modal states
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState('');
-  const [modalMessage, setModalMessage] = useState('');
-  const [actionType, setActionType] = useState(''); // save / next
-
   useEffect(() => {
     if (userCareerInfo) {
       setData({
         job_type: userCareerInfo.job_type || '',
-        work_field: userCareerInfo.occupation || '',
-        income: userCareerInfo.Income || '',
+        work_field: userCareerInfo.occupation || userCareerInfo.work_field || '',
+        income: userCareerInfo.Income || userCareerInfo.income || '',
       });
     }
   }, [userCareerInfo]);
@@ -51,71 +44,38 @@ const CareerScreen = () => {
 
   const saveData = async () => {
     try {
-      setActionType('save');
-      const token = await AsyncStorage.getItem('UserToken');
-      const res = await updateUserCureer(data, token);
-      console.log('res career :', res);
-
+      const res = await dispatch(saveUserCareerInfo(data, token));
       if (res?.success) {
-        setModalType('success');
-        setModalMessage(res.message || 'Career updated successfully!');
-      } else {
-        setModalType('error');
-        setModalMessage(res.message || 'Something went wrong');
+        navigation.navigate('Dashboard', { screen: 'Profile' });
       }
-      setModalVisible(true);
     } catch (err) {
-      setModalType('error');
-      setModalMessage('API call failed!');
-      setModalVisible(true);
+      // console.log('error saving career info', err);
     }
   };
 
   const NextBtn = async () => {
     try {
-      setActionType('next');
-      const token = await AsyncStorage.getItem('UserToken');
-      const res = await updateUserCureer(data, token);
-      console.log('res career :', res);
-
+      const res = await dispatch(saveUserCareerInfo(data, token));
       if (res?.success) {
-        setModalType('success');
-        setModalMessage(res.message || 'Career updated successfully!');
-      } else {
-        setModalType('error');
-        setModalMessage(res.message || 'Something went wrong');
-      }
-      setModalVisible(true);
-    } catch (err) {
-      setModalType('error');
-      setModalMessage('API call failed!');
-      setModalVisible(true);
-    }
-  };
-
-  const handleModalClose = () => {
-    setModalVisible(false);
-
-    if (modalType === 'success') {
-      if (actionType === 'next') {
         navigation.navigate('Physical');
-      } else if (actionType === 'save') {
-        navigation.navigate('Dashboard', { screen: 'Profile' });
       }
+    } catch (err) {
+      // console.log('error next career info', err);
     }
-    // ❌ error case me kahi navigate nahi hoga
   };
 
   return (
-    <Container>
+    <Container paddingBottomContainer={true}>
       <Header
         transparent
         hasBackBtn
         title="Career Details"
+        hasHomeBTN
+        onHomeBTN={() => navigation.navigate('Dashboard', { screen: 'Profile' })}
         onBackPress={() => navigation.goBack()}
       />
       <Content hasHeader contentContainerStyle={styles.container}>
-        <Error error={error} />
+        {/* <Error error={error} /> */}
         <Loading loading={loading} />
         <View>
           <SelectDropdown
@@ -123,60 +83,50 @@ const CareerScreen = () => {
             label="Job Type"
             value={data?.job_type}
             placeholder="Job Type"
-            onSelectChange={value => handleTextChange('job_type', value)}
+            onSelectChange={(value) => handleTextChange('job_type', value)}
           />
-          <CommanText
-            commanText="Occupation"
-            commanTextstyle={styles.birthdayText}
-          />
+          <CommanText commanText="Occupation" commanTextstyle={styles.birthdayText} />
           <TextInputScreen
             defaultInput
             value={data?.work_field}
-            placeholder="Occupation ( work field )"
+            placeholder="Occupation (work field)"
             type="default"
             inputStyle={styles.inputStyle}
-            onChangeText={text => handleTextChange('work_field', text)}
+            onChangeText={(text) => handleTextChange('work_field', text)}
           />
-          <CommanText
-            commanText="Monthly Income (₹)"
-            commanTextstyle={styles.birthdayText}
-          />
+          <CommanText commanText="Monthly Income (₹)" commanTextstyle={styles.birthdayText} />
           <TextInputScreen
             defaultInput
             value={data?.income}
             placeholder="Monthly Income (₹)"
-            type="default"
+            type="numeric"
             inputStyle={styles.inputStyle}
-            onChangeText={text => handleTextChange('income', text)}
+            onChangeText={(text) => handleTextChange('income', text)}
           />
         </View>
       </Content>
-          <View style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 10,
-          }}>
-            <CommanBtnScreen
-              btnText="Save"
-              onBtnPress={saveData}
-              commanBtnTextStyle={styles.commanBtnTextStyle}
-              commanBtnStyle={styles.twoBtnStyle}
-            />
-            <CommanBtnScreen
-              btnText="Next"
-              onBtnPress={NextBtn}
-              commanBtnTextStyle={styles.commanBtnTextStyle}
-              commanBtnStyle={[styles.twoBtnStyle, styles.btnBg]}
-            />
-          </View>
 
-      <StatusModal
-        visible={modalVisible}
-        type={modalType}
-        message={modalMessage}
-        onClose={handleModalClose}
-      />
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 10,
+        }}
+      >
+        <CommanBtnScreen
+          btnText="Save"
+          onBtnPress={saveData}
+          commanBtnTextStyle={styles.commanBtnTextStyle}
+          commanBtnStyle={styles.twoBtnStyle}
+        />
+        <CommanBtnScreen
+          btnText="Next"
+          onBtnPress={NextBtn}
+          commanBtnTextStyle={styles.commanBtnTextStyle}
+          commanBtnStyle={[styles.twoBtnStyle, styles.btnBg]}
+        />
+      </View>
     </Container>
   );
 };

@@ -17,12 +17,12 @@ const MyStory = () => {
   return (
     <Container style={styles.container}>
      
-       <Header
-                transparent
-                hasBackBtn
-                title="My Status"
-                onBackPress={() => navigation.goBack()}
-              />
+      <Header
+              transparent
+              hasBackBtn
+              title="My Story"
+              onBackPress={() => navigation.goBack()}
+            />
       <MyStoryUpload source={storyMedia} onChange={handleStoryChange} />
     </Container>
   );

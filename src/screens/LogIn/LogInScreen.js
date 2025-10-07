@@ -22,6 +22,7 @@ import GetUserDashboard from '../../api/GetUserDashboard';
 import { users } from './staticUsers';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthContext } from '../../context/AuthContext';
+import Toast from 'react-native-toast-message';
 
 function LogInScreen() {
   const { login } = React.useContext(AuthContext);
@@ -47,7 +48,11 @@ function LogInScreen() {
         const passwordErrors = user?.data?.password?.join('\n');
         const message = passwordErrors || user?.message || 'Login failed. Try again.';
 
-        Alert.alert('Login Failed', message);
+        // Alert.alert('Login Failed', message);
+        Toast.show({
+          type: 'error',
+          text1: 'Login Failed', 
+          text2: message || 'Login failed. Try again.'})
         return;
       }
       
@@ -71,7 +76,7 @@ function LogInScreen() {
   };
   
   return (
-    <Container>
+    <Container transparentStatusBar={true}>
       <Content
         hasHeader
         contentContainerStyle={styles.container}

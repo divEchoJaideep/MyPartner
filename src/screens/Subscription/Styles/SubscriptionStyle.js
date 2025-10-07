@@ -13,7 +13,10 @@ const styles = EStyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
+packageImage:{
+  width:'30rem',
+  height:'50rem'
+},
   flatlistView: {
     backgroundColor: Colors.white,
     paddingTop: '10rem',

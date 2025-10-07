@@ -1,4 +1,4 @@
-import { Image, Text, View, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { Image, Text, View, TouchableOpacity, FlatList, Alert, Dimensions } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Container, Content, Header } from '../../components';
 import CommanText from '../../components/CommanText';
@@ -15,10 +15,12 @@ import { interestReject } from '../../api/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
+const screenWidht = Dimensions.get('window').width
+
 const SentRequest = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch()
-  const token = useSelector((state) => state.auth.user.access_token);
+  const token = useSelector(state => state.auth.token);
   const [loading, setLoading] = useState();
   const [error, setError] = useState('');
   const [sentRequest, setSentRequest] = useState([]);
@@ -43,46 +45,46 @@ const SentRequest = () => {
   };
 
   const handleCancelRequest = async (user_id) => {
-  const data = { user_id };
+    const data = { user_id };
 
-  try {
-    setLoading(true);
-    const token = await AsyncStorage.getItem('UserToken');
-    const response = await interestReject(data, token);
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('UserToken');
+      const response = await interestReject(data, token);
 
-    if (response && response.success) {
-      Toast.show({
-        type: 'success',
-        text1: 'Request Cancelled',
-        text2: response.message || 'Request cancelled successfully.',
-      });
-      getUserRequestSent();
-      setCancelRequest(!cancelRequest);
-    } else {
+      if (response && response.success) {
+        Toast.show({
+          type: 'success',
+          text1: 'Request Cancelled',
+          text2: response.message || 'Request cancelled successfully.',
+        });
+        getUserRequestSent();
+        setCancelRequest(!cancelRequest);
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: response?.message || 'Failed to cancel request. Please try again.',
+        });
+      }
+    } catch (err) {
+      console.error('Cancel request error:', err);
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: response?.message || 'Failed to cancel request. Please try again.',
+        text2: 'Something went wrong while cancelling request.',
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('Cancel request error:', err);
-    Toast.show({
-      type: 'error',
-      text1: 'Error',
-      text2: 'Something went wrong while cancelling request.',
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
 
   const renderItem = ({ item, index }) => {
     return (
       <View style={styles.flatlistView}>
-        <TouchableOpacity onPress={() => navigation.navigate('ProfileData')}>
+        <TouchableOpacity onPress={() => navigation.navigate('ProfileData', { userId: item.user_id })}>
           <View style={styles.viewStyle}>
             <Image
               source={item?.photo ? { uri: item?.photo } : Images.userRoundIcon}
@@ -128,7 +130,7 @@ const SentRequest = () => {
             />
           </TouchableOpacity>
           <View style={{ borderWidth: 1, borderColor: 'white', height: 50 }} />
-          <TouchableOpacity style={[styles.buttonName, styles.rightBtn]}>
+          <TouchableOpacity style={[styles.buttonName, styles.rightBtn,{width:screenWidht/2-50}]}>
             <CommanText
               commanText={item.status}
               commanTextstyle={styles.btnText}
@@ -139,9 +141,8 @@ const SentRequest = () => {
     );
   };
   return (
-    <Container statusBar={true}>
+    <Container statusBar={true} transparentStatusBar={true}>
       <Content hasHeader contentContainerStyle={styles.container}>
-        <Error error={error} />
         <Loading loading={loading} />
         {sentRequest.length > 0 ? (
           <FlatList

@@ -10,24 +10,18 @@ import SelectDropdown from '../../components/SelectDropdown/Select';
 import { useDispatch, useSelector } from 'react-redux';
 import Error from '../../components/Error';
 import Loading from '../../components/Loading';
-import { getCityListByStateId } from '../../redux/actions/userDetailsActions';
-import { updateUserAddress } from '../../api/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import StatusModal from '../../components/StatusModal/StatusModal';
-import { address } from '../../redux/reducers/userDetailsReducer';
-
+import { getCityListByStateId, saveUserAddress } from '../../redux/actions/userDetailsActions';
 
 const PresentAddressScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  // Redux states
-  const tokenRedux = useSelector((state) => state.auth.user.access_token);
+  const tokenRedux = useSelector(state => state.auth.token);
   const { country_list, state_list, city_list } = useSelector((state) => state.preList);
   const userAddress = useSelector((state) => state.userDetails.userAddress);
   const loading = useSelector((state) => state.userDetails.loading);
 
-  // Local states
   const [error, setError] = useState('');
   const [data, setData] = useState({
     address_type: 'present',
@@ -39,14 +33,10 @@ const PresentAddressScreen = () => {
     address: '',
   });
 
-  console.log('data present address', data);
-  
-  // Status modal state
-const [modalVisible, setModalVisible] = useState(false);
-const [modalType, setModalType] = useState(''); // success | error
-const [modalMessage, setModalMessage] = useState('');
-const [nextScreen, setNextScreen] = useState(null);
-
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState('');
+  const [modalMessage, setModalMessage] = useState('');
+  const [nextScreen, setNextScreen] = useState(null);
 
   useEffect(() => {
     if (userAddress) {
@@ -66,70 +56,39 @@ const [nextScreen, setNextScreen] = useState(null);
     dispatch(getCityListByStateId(stateID, tokenRedux));
   };
 
-// Save Address
-
-
-
-const saveAddress = async () => {
-  try {
-    const token = await AsyncStorage.getItem('UserToken');
-    const res = await updateUserAddress(data, token);
-
-    if (res?.success === true) {
-     dispatch(address(data));
-
-      setModalType('success');
-      setModalMessage(res.message || 'Address updated successfully!');
-      setNextScreen({ name: 'Dashboard', params: { screen: 'Profile' } }); // yaha navigate na karo
-    } else {
-      setModalType('error');
-      setModalMessage(res?.message || 'Something went wrong');
-      setNextScreen(null);
+  const handleNextBTN = async () => {
+    try {
+      const token = tokenRedux;
+      const response = await dispatch(saveUserAddress(data, token));
+      if (response?.success)
+        navigation.navigate('Education');
+      else setNextScreen({ name: 'Dashboard', params: { screen: 'Profile' } });
+    } catch {
+      ///////
     }
-    setModalVisible(true);
 
-  } catch (err) {
-    setModalType('error');
-    setModalMessage('API call failed!');
-    setNextScreen(null);
-    setModalVisible(true);
   }
-};
 
-// Next Button
-const NextBtn = async () => {
-  try {
-    const token = await AsyncStorage.getItem('UserToken');
-    const res = await updateUserAddress(data, token);
-
-    if (res?.success === true) {
-       dispatch(address(data));
-      dispatch(userAddress(data));
-      setModalType('success');
-      setModalMessage(res.message || 'Address updated successfully!');
-      setNextScreen({ name: 'Education' }); 
-    } else {
-      setModalType('error');
-      setModalMessage(res?.message || 'Something went wrong');
-      setNextScreen(null);
+  const handleSaveBTN = async () => {
+    try {
+      const token = tokenRedux;
+      const response = await dispatch(saveUserAddress(data, token));
+      if (response?.success)
+        navigation.navigate({ name: 'Dashboard', params: { screen: 'Profile' } });
+    } catch {
+      ///////
     }
-    setModalVisible(true);
 
-  } catch (err) {
-    setModalType('error');
-    setModalMessage('API call failed!');
-    setNextScreen(null);
-    setModalVisible(true);
   }
-};
-
 
   return (
-    <Container>
+    <Container paddingBottomContainer={true}>
       <Header
         transparent
         hasBackBtn
         title="Present Address"
+        hasHomeBTN
+        onHomeBTN={() => navigation.navigate('Dashboard', { screen: 'Profile' })}
         onBackPress={() => navigation.goBack()}
       />
       <Content contentContainerStyle={styles.container}>
@@ -167,10 +126,9 @@ const NextBtn = async () => {
             label="Select District"
             placeholder="Choose your District"
             searchPlaceholder="Search District"
-            onSelectChange={(value) => {
-              handleTextChange('city_id', value);
-            }}
+            onSelectChange={(value) => handleTextChange('city_id', value.toString())}
           />
+
 
           <CommanText commanText="Block/Tehsil" commanTextstyle={styles.birthdayText} />
           <TextInputScreen
@@ -201,24 +159,25 @@ const NextBtn = async () => {
             onChangeText={(text) => handleTextChange('postal_code', text)}
           />
         </View>
-
-        {/* Buttons */}
       </Content>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-          <CommanBtnScreen
-            btnText="Save"
-            onBtnPress={saveAddress}
-            commanBtnTextStyle={styles.commanBtnTextStyle}
-            commanBtnStyle={styles.twoBtnStyle}
-          />
-          <CommanBtnScreen
-            btnText="Next"
-            onBtnPress={NextBtn}
-            commanBtnTextStyle={styles.commanBtnTextStyle}
-            commanBtnStyle={[styles.twoBtnStyle, styles.btnBg]}
-          />
-        </View>
 
+      {/* Buttons */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+        <CommanBtnScreen
+          btnText="Save"
+          onBtnPress={() => handleSaveBTN()}
+          commanBtnTextStyle={styles.commanBtnTextStyle}
+          commanBtnStyle={styles.twoBtnStyle}
+        />
+        <CommanBtnScreen
+          btnText="Next"
+          onBtnPress={() => handleNextBTN()}
+          commanBtnTextStyle={styles.commanBtnTextStyle}
+          commanBtnStyle={[styles.twoBtnStyle, styles.btnBg]}
+        />
+      </View>
+
+      {/* Status Modal */}
       <StatusModal
         visible={modalVisible}
         type={modalType}

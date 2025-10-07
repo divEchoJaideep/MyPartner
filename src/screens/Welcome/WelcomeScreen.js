@@ -21,7 +21,7 @@ function WelcomeScreen({navigation}) {
     SplashScreen.hide();
   }, []);
   return (
-    <Container>
+    <Container transparentStatusBar={true}>
       <Content hasHeader contentContainerStyle={styles.container}>
         <ImageBackground source={Images.Welcome} style={styles.imageStyle}>
           <CommanText

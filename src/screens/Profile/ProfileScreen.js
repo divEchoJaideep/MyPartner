@@ -5,43 +5,29 @@ import { Images } from '../../theme';
 import { profileList } from '../../assets/data';
 import styles from './Styles/ProfileStyle';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../redux/actions/authActions';
+import { logout as logoutAction } from '../../redux/actions/authActions';
 import { AuthContext } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { profiledropdownUrl } from '../../api/const';
+import commonrequest from '../../api/commonrequest';
+import { setPreDefineState } from '../../redux/reducers/perDefineListReducer';
+import { getUserInfo } from '../../redux/actions/userDetailsActions';
 
 function ProfileScreen({ navigation }) {
   const { logout } = React.useContext(AuthContext);
   const dispatch = useDispatch();
   const userBasicInfo = useSelector((state) => state.userDetails.userBasicInfo);
-
+  const token = useSelector((state) => state.auth.token);
   const [storedUser, setStoredUser] = React.useState(null);
 
-  // Focus pe data reload karega
-  useFocusEffect(
-    React.useCallback(() => {
-      const loadUserFromStorage = async () => {
-        try {
-          const stored = await AsyncStorage.getItem("UserInfo");
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            setStoredUser({
-              ...parsed.basic_details,
-              photo:
-                typeof parsed?.basic_details?.photo === "string"
-                  ? { uri: parsed.basic_details.photo }
-                  : parsed?.basic_details?.photo || Images.UserImage,
-            });
-          }
-        } catch (error) {
-          console.log("Error loading stored user:", error);
-        }
-      };
-
-      loadUserFromStorage();
-    }, [])
-  );
-
+ useFocusEffect(
+  React.useCallback(() => {
+   if (token) {
+      dispatch(getUserInfo(token));
+    }
+  }, [token])
+);
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
@@ -49,7 +35,7 @@ function ProfileScreen({ navigation }) {
         text: "Logout",
         style: "destructive",
         onPress: async () => {
-          await dispatch(logout());
+          await dispatch(logoutAction());
           logout();
           navigation.reset({
             index: 0,
@@ -60,7 +46,14 @@ function ProfileScreen({ navigation }) {
     ]);
   };
 
-  const profilePhoto = storedUser?.photo || Images.UserImage;
+  // const profilePhoto = storedUser?.photo || Images.UserImage;
+  const profilePhoto =
+  userBasicInfo?.photo
+    ? (typeof userBasicInfo.photo === 'string'
+        ? { uri: userBasicInfo.photo }
+        : userBasicInfo.photo)
+    : storedUser?.photo || Images.UserImage;
+
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
@@ -81,16 +74,17 @@ function ProfileScreen({ navigation }) {
   );
 
   return (
-    <Container>
+    <Container 
+    // transparentStatusBar={true}
+    >
       <Header
         transparent
         hasBackBtn
         title="Profile"
         onBackPress={() => navigation.goBack()}
       />
-      <Content hasHeader contentContainerStyle={styles.container}>
         <TouchableOpacity
-          style={styles.profileEditContent}
+          style={[styles.profileEditContent,{marginHorizontal:20}]}
           onPress={() => navigation.navigate("ProfileEdit")}
         >
           <View style={styles.profileImageContent}>
@@ -118,6 +112,8 @@ function ProfileScreen({ navigation }) {
               />
           </View>
         </TouchableOpacity>
+              <Content hasHeader contentContainerStyle={styles.container}>
+
         <View style={styles.profileLinkListContent}>
           <FlatList data={profileList} renderItem={renderItem} bounces={false} />
         </View>

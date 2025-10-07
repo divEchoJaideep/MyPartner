@@ -31,13 +31,14 @@ const authSlice = createSlice({
       state.error = null;
     },
 
-    // ✅ You must add this
-    restoreSession: (state, action) => {
-      state.loading = false;
-      state.isAuthenticated = true;
-      state.user = action.payload;
-      state.error = null;
-    },
+   restoreSession: (state, action) => {
+  state.loading = false;
+  state.isAuthenticated = true;
+  state.user = action.payload.user;   // store user
+  state.token = action.payload.token; // store token
+  state.error = null;
+},
+
   },
 });
 

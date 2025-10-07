@@ -465,13 +465,13 @@ const popularDestionationData = [
 const profileList = [
    {
     id: 9,
-    image: Images.FeedBackIcon,
+    image: Images.StarActive,
     text: 'Story',
     pageName: 'StoryBoard', 
   },
   {
     id: 10,
-    image: Images.StarActive,
+    image: Images.FeedBackIcon,
     text: 'Favourite',
     pageName: 'WishlistScreen', 
   },
@@ -490,20 +490,20 @@ const profileList = [
     {
     id: 7,
     image: Images.DocumentIcon,
-    text: 'Terms of Service',
+    text: 'Terms of Use',
     pageName: 'TermsofServiceScreen',
   },
-   {
-    id: 5,
-    image: Images.SafetyPluseIcon,
-    text: 'Safety Center',
-    pageName: 'SafetyCenterScreen',
-  },
+  //  {
+  //   id: 5,
+  //   image: Images.SafetyPluseIcon,
+  //   text: 'Safety Center',
+  //   pageName: 'SafetyCenterScreen',
+  // },
   // {
   //   id: 3,
   //   image: Images.VerifyIcon,
-  //   text: 'Payment Mathod',
-  //   pageName: 'PaymentMathodScreen',
+  //   text: 'Test',
+  //   pageName: 'Test',
   // },
   {
     id: 4,
@@ -512,21 +512,31 @@ const profileList = [
     pageName: 'ChangePasswordScreen',
   },
  
-  // {
-  //   id: 6,
-  //   image: Images.QuestionMarkIcon,
-  //   text: 'Help Center',
-  //   pageName: 'HelpCenterScreen',
-  // },
+  {
+    id: 6,
+    image: Images.NotificationImage,
+    text: 'Notification',
+    pageName: 'Notification',
+  },
 
-  // {
-  //   id: 8,
-  //   image: Images.FeedBackIcon,
-  //   text: 'Feedback',
-  //   pageName: 'FeedbackScreen',
-  // },
-  
-  
+  {
+    id: 8,
+    image: Images.Group,
+    text: 'Invite & Earn',
+    pageName: 'Wallet',
+  },
+  {
+    id: 9,
+    image: Images.Lock,
+    text: 'Privacy Policy',
+    pageName: 'PrivacyPolicy',
+  },
+   {
+    id: 12,
+    image: Images.Besafe,
+    text: 'Safety Center',
+    pageName: 'BeSafe', 
+  },
    {
     id: 11,
     image: Images.PowerOff,

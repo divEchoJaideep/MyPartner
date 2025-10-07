@@ -1,6 +1,6 @@
 import EStyleSheet from 'react-native-extended-stylesheet';
-import {StatusBar} from 'react-native';
-import {Colors} from '../../../theme';
+import { StatusBar } from 'react-native';
+import { Colors } from '../../../theme';
 
 const styles = EStyleSheet.create({
   safeViewcontainer: {
@@ -10,9 +10,13 @@ const styles = EStyleSheet.create({
   },
   safeViewcontainerStatusBar: {
     '@media android': {
-      marginTop: StatusBar.currentHeight,
+      marginTop: StatusBar.currentHeight, // sirf opaque case me use hoga
     },
   },
+  statusBarMarginTop: {
+    marginTop: StatusBar.currentHeight, // same
+  },
+
   container: {
     flex: 1,
     alignItems: 'center',
@@ -20,9 +24,6 @@ const styles = EStyleSheet.create({
   statusBarMarginTop: {
     marginTop: StatusBar.currentHeight,
   },
-  // safeViewcontainer:{
-  //   flex:1,
-  // },
 });
 
 export default styles;

@@ -37,6 +37,10 @@ import FeedbackScreen from '../screens/Feedback/FeedbackScreen';
 import LanguageScreen from '../screens/Profile/LanguageScreen';
 import InterestScreen from '../screens/Profile/InterestScreen';
 import BlockedUser from '../screens/Block/BlockedUser';
+import Test from '../screens/Test/Test';
+import Walletscreen from '../screens/Wallet/Walletscreen';
+import PrivacyPolicy from '../screens/TermsofService/PrivacyPolicy';
+import BeSafe from '../screens/TermsofService/BeSafe';
 
 const Stack = createNativeStackNavigator();
 
@@ -74,8 +78,10 @@ const AppStack = () => {
       <Stack.Screen name="Language" component={LanguageScreen} />
       <Stack.Screen name="Interest" component={InterestScreen} />
       <Stack.Screen name="BlockedUser" component={BlockedUser} />
-
-
+      <Stack.Screen name="Test" component={Test} />
+      <Stack.Screen name="Wallet" component={Walletscreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
+      <Stack.Screen name="BeSafe" component={BeSafe} />
     </Stack.Navigator>
   );
 };

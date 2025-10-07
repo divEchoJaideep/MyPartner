@@ -11,6 +11,9 @@ const profiledropdownUrl = `${apiBaseUrl}/profile-dropdown`;
 const getUserDetails = `${apiBaseUrl}/member/details`;
 const publicProfile = `${apiBaseUrl}/member/public-profile`;
 const basicinfo = `${apiBaseUrl}/member/basic-info/update`;
+const saveFCMToken = `${apiBaseUrl}/fcm-token-update`;
+const chatApi = `${apiBaseUrl}/member/chat/notify`;
+const Share = `${apiBaseUrl}/member/share-requests`;
 // country Id: 101, Name :India
 const district = `${apiBaseUrl}/member/cities`;
 const religionCaste = `${apiBaseUrl}/member/casts`;
@@ -49,7 +52,8 @@ const SubscriptionPackage = `${apiBaseUrl}/packages`;
 const deleteMyStatus = `${apiBaseUrl}/member/status`;
 const personalImageDelete = `${apiBaseUrl}/member/gallery-image`;
 
-//get
+//get'
+const getNotification = `${apiBaseUrl}/member/notifications `;
 const getFullProfile = `${apiBaseUrl}/member/public-profile`;
 const getFriendStory = `${apiBaseUrl}/member/mutual-friends-status`;
 const getKnownLanguages = `${apiBaseUrl}/member/known_languages`;
@@ -70,6 +74,9 @@ const getPermanentAddress = `${apiBaseUrl}/member/permanent/address`;
 const getPartnerExpectation = `${apiBaseUrl}/member/partner-expectation`;
 
 export {
+  Share,
+  chatApi,
+  getNotification,
   getFullProfile,
   personalImageDelete,
   passwordChange,
@@ -115,6 +122,7 @@ export {
   postStatusUpload,
   idProff,
   requestInterestCancel,
+  saveFCMToken,
   //delete 
 deleteMyStatus,
 

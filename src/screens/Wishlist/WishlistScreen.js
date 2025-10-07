@@ -1,23 +1,21 @@
-import React, {useEffect, useState} from 'react';
-import {Container, Content, Header} from '../../components';
+import React, { useEffect, useState } from 'react';
+import { Container, Content, Header } from '../../components';
 import styles from './Styles/WishlistStyle';
-import {FlatList, Image, Text, TouchableOpacity} from 'react-native';
+import { FlatList, Image, Text, TouchableOpacity } from 'react-native';
 import GetUserLike from '../../api/GetUserLike';
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 
 const WishlistScreen = () => {
   const navigation = useNavigation()
-  const token = useSelector( (state) => state.auth.user.access_token);
+  const token = useSelector(state => state.auth.token);
   const [data, setData] = useState([]);
   useEffect(() => {
     getMyLike();
-    }, [navigation]);
+  }, [navigation]);
 
   const getMyLike = async () => {
-    const response = await GetUserLike({token: token});
-    console.log('response :',response);
-    
+    const response = await GetUserLike({ token: token });
     if (response && response.result) {
       setData(response.data)
     }
@@ -31,10 +29,17 @@ const WishlistScreen = () => {
     );
   };
 
-  const renderItem = ({item, index}) => {
+  const renderItem = ({ item, index }) => {
     return (
-      <TouchableOpacity style={styles.profile}>
-        <Image source={{uri:item.photo}} style={styles.profileImage} />
+      <TouchableOpacity style={styles.profile}
+        onPress={() =>
+          navigation.navigate('ProfileData', {
+            userId: item?.user_id,
+            // userProfileData: item,
+          })
+        }
+      >
+        <Image source={{ uri: item.photo }} style={styles.profileImage} />
         <Text style={styles.profileName}>{item.name}</Text>
       </TouchableOpacity>
     );
@@ -45,7 +50,7 @@ const WishlistScreen = () => {
       <Header
         transparent
         hasBackBtn
-        title="Favourity"
+        title="Favourite"
         onBackPress={() => navigation.goBack()}
       />
       <Content hasHeader contentContainerStyle={styles.container}>
@@ -56,7 +61,7 @@ const WishlistScreen = () => {
           pagingEnabled
           scrollEnabled={false}
           numColumns={2}
-          columnWrapperStyle={{justifyContent: 'space-between'}}
+          columnWrapperStyle={{ justifyContent: 'space-between' }}
         />
       </Content>
     </Container>

@@ -16,6 +16,23 @@ const styles = EStyleSheet.create({
     width: '23rem',
     height: '23rem',
   },
+  tabBadge: {
+  position: 'absolute',
+  right: -3,
+  top: -3,
+  backgroundColor: Colors.red,
+  borderRadius: 8,
+  width: 10,
+  height: 10,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+tabBadgeText: {
+  color: Colors.white,
+  fontSize: 10,
+  fontWeight: 'bold',
+},
+
 });
 
 export default styles;

@@ -21,6 +21,8 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
+    width:width - 43,
+    marginTop:3,
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 14,
@@ -79,6 +81,7 @@ const styles = StyleSheet.create({
   userStorytime: {
     color: '#ddd',
     fontSize: 14,
+    marginLeft:10,
   },
 })
 

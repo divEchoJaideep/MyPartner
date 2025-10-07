@@ -1,105 +1,164 @@
 import {
   Image,
-  Text,
   View,
   TouchableOpacity,
   FlatList,
-  Alert,
 } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Container, Content, Header } from '../../components';
+import React, { useCallback, useState } from 'react';
+import { Container, Content } from '../../components';
 import CommanText from '../../components/CommanText';
 import styles from './Style/InboxStyle';
 import CommanBtn from '../../components/CommanBtn';
 import { Images } from '../../theme';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import Loading from '../../components/Loading';
-import Error from '../../components/Error';
 import GetUserReceivedRequest from '../../api/GetUserReceivedRequest';
-import PostUserRequestAccepted from '../../api/PostUserRequestAccepted';
-import { userBlock, userBlockRequest } from '../../api/api';
+import {
+  blockedUsers,
+  blockedUsersUnblock,
+  userBlockRequest,
+} from '../../api/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
 const AcceptedRequest = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch()
-  const token = useSelector((state) => state.auth.user.access_token);
-  const [loading, setLoading] = useState();
+  const token = useSelector(state => state.auth.token);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [receivedRequest, setReceivedRequest] = useState([]);
-  console.log('receivedRequest :', receivedRequest);
+  const [blockedUsersList, setBlockedUsersList] = useState([]);
 
+  console.log('receivedRequest :', receivedRequest);
+  console.log('blockedUsersList :', blockedUsersList);
+
+  // Fetch requests + blocked users whenever screen focuses
   useFocusEffect(
     useCallback(() => {
       getUserReceivedRequest();
+      getBlockedUsers();
     }, []),
   );
-  // useEffect(() => {
-  //   getUserReceivedRequest();
-  // }, []);
 
+  // ✅ Get Accepted Requests
   const getUserReceivedRequest = async () => {
-    setLoading(true);
-    const response = await GetUserReceivedRequest({ token: token });
-    console.log('received request : ', response.data);
-
-    if (response && response.data) {
-      const pendingRequests = response.data.filter(
-        request => request.status === 'Approved',
-      );
-      setReceivedRequest(pendingRequests);
-      // setReceivedRequest(response.data);
-    } else {
-      setError(response.message);
+    try {
+      setLoading(true);
+      const response = await GetUserReceivedRequest({ token });
+      if (response && response.data) {
+        const approved = response.data.filter(req => req.status === 'Approved');
+        setReceivedRequest(approved);
+      } else {
+        setError(response?.message || 'Failed to fetch requests.');
+      }
+    } catch (err) {
+      console.log('Error fetching received requests:', err);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
+  // ✅ Get Blocked Users
+  const getBlockedUsers = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('UserToken');
+      const res = await blockedUsers(token);
+      console.log('Blocked Users API:', res);
 
-  const handleBlock = async (id) => {
-  const data = { interest_id: id };
+      if (res?.result) {
+        setBlockedUsersList(res?.data || []);
+      } else {
+        setBlockedUsersList([]);
+      }
+    } catch (err) {
+      console.log('API error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  try {
-    setLoading(true);
-    const token = await AsyncStorage.getItem('UserToken');
-    const response = await userBlockRequest(data, token);
+  // ✅ Block User
+  const handleBlock = async user_id => {
+    const data = { user_id };
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('UserToken');
+      const response = await userBlockRequest(data, token);
+      console.log('response block:', response);
 
-    console.log('response block:', response);
-
-    if (response && response.success) {
-      Toast.show({
-        type: 'success',
-        text1: 'User Blocked',
-        text2: response.message || 'User blocked successfully.',
-      });
-      getUserReceivedRequest();
-    } else {
+      if (response?.success) {
+        Toast.show({
+          type: 'success',
+          text1: 'User Blocked',
+          text2: response?.message || 'User blocked successfully.',
+        });
+        await Promise.all([getUserReceivedRequest(), getBlockedUsers()]);
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: response?.message || 'Failed to block user.',
+        });
+      }
+    } catch (err) {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: response?.message || 'Failed to block user.',
+        text2: 'Something went wrong while blocking user.',
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('Block error:', err);
-    Toast.show({
-      type: 'error',
-      text1: 'Error',
-      text2: 'Something went wrong while blocking user.',
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
+  // ✅ Unblock User
+  const handleUnblock = async user_id => {
+    const data = { user_id };
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('UserToken');
+      const res = await blockedUsersUnblock(data, token);
+      console.log('Unblock response:', res);
 
-  const renderItem = ({ item, index }) => {
+      if (res?.success === true) {
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: res?.message || 'User unblocked successfully.',
+        });
+        await Promise.all([getBlockedUsers(), getUserReceivedRequest()]);
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: res?.message || 'Failed to unblock user.',
+        });
+      }
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Something went wrong while unblocking user.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Render Each User
+  const renderItem = ({ item }) => {
+    const isBlocked = blockedUsersList.some(
+      user => user.user_id === item.user_id,
+    );
+
     return (
       <View style={styles.flatlistView}>
-        <TouchableOpacity onPress={() => navigation.navigate('ProfileData')}>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('ProfileData', { userId: item.user_id })
+          }>
           <View style={styles.viewStyle}>
             <Image
               source={item?.photo ? { uri: item?.photo } : Images.userRoundIcon}
@@ -116,7 +175,7 @@ const AcceptedRequest = () => {
 
               <View style={styles.detailsStyle}>
                 <CommanText
-                  commanText={`${item.job_type}, `}
+                  commanText={`${item.job_type || ''}, `}
                   commanTextstyle={styles.textStyle}
                 />
                 <CommanText
@@ -129,8 +188,42 @@ const AcceptedRequest = () => {
         </TouchableOpacity>
 
         <View style={styles.controlNameRow}>
-          <TouchableOpacity style={[styles.buttonName, styles.rightBtn]} onPress={() => handleBlock(item.id)}>
-            <CommanText commanText="Block" commanTextstyle={styles.btnText} />
+          {isBlocked ? (
+            <TouchableOpacity
+              style={[styles.buttonName, styles.rightBtn]}
+              onPress={() => handleUnblock(item.user_id)}>
+              <CommanText
+                commanText="Unblock"
+                commanTextstyle={styles.btnText}
+              />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[styles.buttonName, styles.rightBtn]}
+              onPress={() => handleBlock(item.user_id)}>
+              <CommanText commanText="Block" commanTextstyle={styles.btnText} />
+            </TouchableOpacity>
+          )}
+
+          <View style={{ borderWidth: 1, borderColor: 'white', height: 50 }} />
+
+          <TouchableOpacity
+            style={[styles.buttonName, styles.rightBtn]}
+            onPress={() => {
+              const friend = {
+                id: item?.user_id,
+                interestID: item?.id,
+                friendId: `${item?.user_id}_friend`,
+                name: item?.name,
+                photo: item?.photo,
+                role: 'friend',
+              };
+              navigation.navigate('chatDetails', {
+                friend,
+                conversationId: null,
+              });
+            }}>
+            <CommanText commanText="Chat" commanTextstyle={styles.btnText} />
           </TouchableOpacity>
         </View>
       </View>
@@ -138,9 +231,8 @@ const AcceptedRequest = () => {
   };
 
   return (
-    <Container statusBar={true}>
+    <Container statusBar={true} transparentStatusBar={true}>
       <Content hasHeader contentContainerStyle={styles.container}>
-        <Error error={error} />
         <Loading loading={loading} />
         {receivedRequest.length > 0 ? (
           <FlatList
@@ -148,33 +240,26 @@ const AcceptedRequest = () => {
             renderItem={renderItem}
             keyExtractor={item => item.id.toString()}
           />
-
         ) : (
-          !loading &&
-          <View style={styles.innerView}>
-            <CommanText
-              commanText="No Accepted Requests"
-              commanTextstyle={styles.birthdayText}
-            />
-            <CommanText commanText=" Check out more Profiles and continue your Partner search" />
-          </View>
+          !loading && (
+            <View style={styles.innerView}>
+              <CommanText
+                commanText="No Accepted Requests"
+                commanTextstyle={styles.birthdayText}
+              />
+              <CommanText commanText="Check out more profiles and continue your Partner search" />
+            </View>
+          )
         )}
         <CommanBtn
-              btnText="Search Partner"
-              onBtnPress={() => navigation.navigate('Home')}
-              commanBtnTextStyle={styles.commanBtnTextStyle}
-              commanBtnStyle={styles.btnStyle}
-            />
+          btnText="Search Partner"
+          onBtnPress={() => navigation.navigate('Home')}
+          commanBtnTextStyle={styles.commanBtnTextStyle}
+          commanBtnStyle={styles.btnStyle}
+        />
       </Content>
     </Container>
   );
 };
-
-// function mapStateToProps(state) {
-//   return {
-//     token: state.auth.user.access_token,
-//     userId: state.userRequestAccepted.interest_id,
-//   };
-// }
 
 export default AcceptedRequest;

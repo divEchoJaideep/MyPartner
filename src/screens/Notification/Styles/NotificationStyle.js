@@ -12,9 +12,10 @@ const styles = EStyleSheet.create({
     paddingHorizontal: '20rem',
   },
   notificationLinkIcon: {
-    width: '15rem',
-    height: '15rem',
+    width: '20rem',
+    height: '20rem',
     marginTop: '3rem',
+    
   },
   notificationLinksHeadingPeregraph: {
     borderBottomWidth: '2rem',

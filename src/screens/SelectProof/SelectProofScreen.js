@@ -1,42 +1,70 @@
-import * as React from 'react';
-import { useState, useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { Container, Content, Header } from '../../components';
-import CommanHeading from '../../components/CommanHeading';
-import CommanBtn from '../../components/CommanBtn';
-import CommanText from '../../components/CommanText';
-import { navigate } from '../../navigation/ReduxNavigation';
-import styles from './Styles/SelectProofStyle';
-import SelectDropdown from '../../components/SelectDropdown/Select';
-import ProfilePhoto from '../../components/ProfilePhoto';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getUserAllDetails, updateUserProff } from '../../api/api';
-import StatusModal from '../../components/StatusModal/StatusModal';
+import * as React from "react";
+import { useState, useEffect } from "react";
+import { View, ActivityIndicator, Dimensions } from "react-native";
+import { Container, Content, Header } from "../../components";
+import CommanHeading from "../../components/CommanHeading";
+import CommanBtn from "../../components/CommanBtn";
+import CommanText from "../../components/CommanText";
+import { useDispatch, useSelector } from "react-redux";
+import styles from "./Styles/SelectProofStyle";
+import SelectDropdown from "../../components/SelectDropdown/Select";
+import ProfilePhoto from "../../components/ProfilePhoto";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  fetchUserVerificationInfo,
+  saveUserVerificationInfo,
+} from "../../redux/actions/userDetailsActions";
+import StatusModal from "../../components/StatusModal/StatusModal";
+import { updateVerification } from "../../redux/reducers/userDetailsReducer";
 
 const documentType = [
   { id: "aadhar", name: "Aadhar Card" },
   { id: "voter_id", name: "Voter Id" },
   { id: "driving_licence", name: "Driving Licence" },
-  { id: "other", name: "Other" }
+  { id: "other", name: "Other" },
+
 ];
 
 function SelectProofScreen({ navigation }) {
+  const screenWidth = Dimensions.get("window").width;
+  const screenHeight = Dimensions.get("window").height;
+  const dispatch = useDispatch();
+  const { loading, userVerification } = useSelector(state => state.userDetails);
+  const verification = useSelector(state => state.userDetails.userVerification)
   const [data, setData] = useState({
     document_type: "",
     front_photo: "",
-    back_photo: ""
+    back_photo: "",
   });
 
-  const [loading, setLoading] = useState(true);
-
-  // 🔥 Modal states
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState('success'); // success / error
-  const [modalMessage, setModalMessage] = useState('');
+  // const [modalVisible, setModalVisible] = useState(false);
+  // const [modalType, setModalType] = useState("success");
+  // const [modalMessage, setModalMessage] = useState("");
 
   useEffect(() => {
-    getUserFullDetails();
+    getUserDetails();
   }, []);
+
+  const getUserDetails = async () => {
+    const token = await AsyncStorage.getItem("UserToken");
+    const res = await dispatch(saveUserVerificationInfo(formData, token));
+
+    dispatch(updateVerification({
+      document_type: data.document_type,
+      front_photo: data.front_photo,
+      back_photo: data.back_photo,
+    }));
+  }
+
+  useEffect(() => {
+    if (verification) {
+      setData({
+        document_type: verification.document_type || "",
+        front_photo: verification.front_photo || "",
+        back_photo: verification.back_photo || "",
+      });
+    }
+  }, [verification]);
 
   const handleTextChange = (key, value) => {
     setData({ ...data, [key]: value });
@@ -47,14 +75,8 @@ function SelectProofScreen({ navigation }) {
   };
 
   const saveData = async () => {
-    try {
-      if (!data.document_type || !data.front_photo || !data.back_photo) {
-        setModalType('error');
-        setModalMessage("All fields are required!");
-        setModalVisible(true);
-        return;
-      }
 
+    try {
       const token = await AsyncStorage.getItem("UserToken");
 
       const formData = new FormData();
@@ -76,63 +98,35 @@ function SelectProofScreen({ navigation }) {
         });
       }
 
-      const res = await updateUserProff(formData, token);
-
+      const res = await dispatch(saveUserVerificationInfo(formData, token));
       if (res.success) {
-        setModalType('success');
-        setModalMessage(res.message || "Image updated successfully!");
-      } else {
-        setModalType('error');
-        setModalMessage(res.message || "Something went wrong");
-      }
-      setModalVisible(true);
-    } catch (err) {
-      setModalType('error');
-      setModalMessage("Connect to help center");
-      setModalVisible(true);
-    }
-  };
-
-  const getUserFullDetails = async () => {
-    try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('UserToken');
-      const res = await getUserAllDetails(token);
-
-      if (res.success) {
-        setData({
-          document_type: res?.data?.verification?.document_type || "",
-          front_photo: res?.data?.verification?.front_photo || "",
-          back_photo: res?.data?.verification?.back_photo || "",
-        });
+        navigation.navigate("Dashboard", { screen: "Profile" });
       }
     } catch (err) {
-      console.log("API Error:", err);
-    } finally {
-      setLoading(false);
+      // setModalType("error");
+      // setModalMessage("Connect to help center");
     }
   };
 
-  // 🔥 Modal close handle
-  const handleModalClose = () => {
-    setModalVisible(false);
-    if (modalType === 'success') {
-      navigation.navigate('Dashboard', { screen: 'Profile' });
-    }
-  };
+  // const handleModalClose = () => {
+  //   setModalVisible(false);
+  //   if (modalType === "success") {
+  //     navigation.navigate("Dashboard", { screen: "Profile" });
+  //   }
+  // };
 
   const renderImageBox = (label, value, keyName) => (
-    <View style={{ alignItems: 'center' }}>
+    <View style={{ alignItems: "center",flexDirection:"column" }}>
       {loading ? (
         <View
           style={{
-            width: 120,
-            height: 120,
+            width: screenWidth - 60,
+            height: screenHeight/5,
             borderRadius: 10,
             borderWidth: 1,
-            borderColor: '#ccc',
-            justifyContent: 'center',
-            alignItems: 'center',
+            borderColor: "#ccc",
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
           <ActivityIndicator size="small" color="#000" />
@@ -140,24 +134,26 @@ function SelectProofScreen({ navigation }) {
       ) : (
         <View
           style={{
-            width: 120,
-            height: 120,
+            width: screenWidth - 60,
+            height: screenHeight /5,
             borderRadius: 10,
             borderWidth: 1,
-            borderColor: '#ccc',
-            justifyContent: 'center',
-            alignItems: 'center',
-            overflow: 'hidden',
+            borderColor: "#ccc",
+            justifyContent: "center",
+            alignItems: "center",
+            overflow: "hidden",
           }}
         >
           <ProfilePhoto
             source={value}
+            width={screenWidth - 60}
+            height={screenHeight / 5}
             userGallery
-            onChange={image => updateImage(keyName, image)}
+            onChange={(image) => updateImage(keyName, image)}
             placeholderComponent={
               <CommanText
                 commanText="+"
-                commanTextstyle={{ fontSize: 30, color: '#aaa' }}
+                commanTextstyle={{ fontSize: 30, color: "#aaa" }}
               />
             }
           />
@@ -168,11 +164,13 @@ function SelectProofScreen({ navigation }) {
   );
 
   return (
-    <Container>
+    <Container paddingBottomContainer={true}>
       <Header
         transparent
         hasBackBtn
         title="Identity Verification"
+        hasHomeBTN
+        onHomeBTN={() => navigation.navigate('Dashboard', { screen: 'Profile' })}
         onBackPress={() => navigation.goBack()}
       />
       <Content contentContainerStyle={styles.container}>
@@ -182,16 +180,17 @@ function SelectProofScreen({ navigation }) {
           value={data?.document_type}
           placeholder="Choose an ID type"
           searchPlaceholder="Search ID Type"
-          onSelectChange={value => handleTextChange('document_type', value)}
+          onSelectChange={(value) => handleTextChange("document_type", value)}
         />
 
-        <CommanHeading headingText heading="Upload Image" navigation={navigate} />
+        <CommanHeading headingText heading="Upload Image" />
 
         <View
           style={{
-            width: '100%',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
+            width: "100%",
+            // flexDirection: "row",
+            gap:56,
+            justifyContent: "space-between",
             marginTop: 20,
           }}
         >
@@ -199,20 +198,20 @@ function SelectProofScreen({ navigation }) {
           {renderImageBox("Back Image", data?.back_photo, "back_photo")}
         </View>
 
-        <CommanBtn
-          btnText="Save"
-          onBtnPress={saveData}
-          commanBtnTextStyle={styles.commanBtnTextStyle}
-          commanBtnStyle={styles.twoBtnStyle}
-        />
       </Content>
+      <CommanBtn
+        btnText="Save"
+        onBtnPress={saveData}
+        commanBtnTextStyle={styles.commanBtnTextStyle}
+        commanBtnStyle={styles.twoBtnStyle}
+      />
 
-      <StatusModal
+      {/* <StatusModal
         visible={modalVisible}
         type={modalType}
         message={modalMessage}
         onClose={handleModalClose}
-      />
+      /> */}
     </Container>
   );
 }

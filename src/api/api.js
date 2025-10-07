@@ -1,5 +1,5 @@
 import commonrequest from "./commonrequest";
-import { basicinfo, getBasicInfo, getFriendStory, getFullProfile, getKnownLanguages, getUserDetails, idProff, passwordChange, passwordForgot, passwordReset, personalImageDelete, profiledropdownUrl,requestInterestCancel,subCaste, SubscriptionPackage, updateAddress, updateCareer, updateEducation, updateImages, updateLanguage, updatePhysicalAttributes, updateSpiritual, userBlock, userBlockedList, userCancelRequest, userRequest, userRequestAccepted, userUnBlock } from "./const";
+import { basicinfo, chatApi, getBasicInfo, getFriendStory, getFullProfile, getKnownLanguages, getNotification, getUserDetails, idProff, passwordChange, passwordForgot, passwordReset, personalImageDelete, profiledropdownUrl,requestInterestCancel,saveFCMToken,Share,subCaste, SubscriptionPackage, updateAddress, updateCareer, updateEducation, updateImages, updateLanguage, updatePhysicalAttributes, updateSpiritual, userBlock, userBlockedList, userCancelRequest, userRequest, userRequestAccepted, userUnBlock } from "./const";
 
 
 export const getUserBasicInformation = async (token) => {
@@ -120,4 +120,24 @@ export const GetPersonalImages = async (token) => {
 
 export const fullDetailProfile = async (id, token) => {
   return await commonrequest("GET", `${getFullProfile}/${id}`, '', token);
+};
+
+export const fCMTokenSave = async (data, header) => {
+    return await commonrequest('POST', `${saveFCMToken}`, data, header);
+};
+
+export const GetMemberNotification = async (token) => {
+  return await commonrequest('GET', getNotification, '', token);
+};
+
+export const chatNotification = async (data, header) => {
+    return await commonrequest('POST', `${chatApi}`, data, header);
+};
+
+export const getShare = async ( header) => {
+    return await commonrequest('GET', `${Share}`, '', header);
+};
+
+export const postShar = async (header) => {
+    return await commonrequest('POST', `${Share}`, '', header);
 };

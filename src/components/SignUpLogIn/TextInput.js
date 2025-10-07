@@ -19,6 +19,7 @@ function TextInputScreen({
   autoCapitalize,
   numberOfLines,
   maxLength,
+  readOnly,
 }) {
   const [showPassword, setShowPassword] = useState(true);
   // console.log('balueeee----',value)
@@ -35,6 +36,7 @@ function TextInputScreen({
           value={value}
           numberOfLines={numberOfLines}
           maxLength={maxLength}
+          readOnly={readOnly}
         />
       )}
       {passwordInput && (

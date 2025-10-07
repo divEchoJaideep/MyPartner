@@ -18,6 +18,7 @@ const styles = EStyleSheet.create({
     width: '110rem',
     height: '110rem',
     borderRadius: '110rem',
+    resizeMode: 'stretch'
   },
   profileInputStyle: {
     borderBottomWidth: '2rem',

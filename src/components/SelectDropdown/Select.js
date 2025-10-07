@@ -12,7 +12,6 @@ const SelectDropdown = props => {
       setValue(props.value);
     }
   }, [props?.value]);
-console.log(' props.data select :',props.data);
 
   return (
     <View style={styles.dropdownConteiner}>
@@ -59,7 +58,7 @@ console.log(' props.data select :',props.data);
           iconStyle={styles.iconStyle}
           data={props.data}
           multiple={props.multiple}
-          search
+          search={props.search}
           maxHeight={300}
           labelField="name"
           valueField="id"

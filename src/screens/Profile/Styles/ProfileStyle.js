@@ -7,6 +7,8 @@ const { width, height } = Dimensions.get("screen");
 const styles = EStyleSheet.create({
   container: {
     paddingHorizontal: '20rem',
+    flex:1
+    
   },
   profileEditContent: {
     backgroundColor: Colors.lightWhite,

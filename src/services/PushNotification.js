@@ -1,44 +1,136 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
-import { Alert } from 'react-native';
+import { PermissionsAndroid, Platform } from 'react-native';
+import { fCMTokenSave } from '../api/api';
 
-class PushNotification {
-  async requestUserPermission() {
+export async function requestUserPermission() {
+  if (Platform.OS === 'android') {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      {
+        title: "Notification Permission",
+        message: "This app needs access to send you notifications.",
+        buttonNeutral: "Ask Me Later",
+        buttonNegative: "Cancel",
+        buttonPositive: "OK",
+      }
+    );
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log("Notification permission granted");
+      getFcmToken();
+    } else {
+      console.log("Notification permission denied");
+    }
+  } else { 
     const authStatus = await messaging().requestPermission();
     const enabled =
       authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
       authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
     if (enabled) {
-      console.log('Notification permission granted:', authStatus);
-      this.getFcmToken();
+      console.log('Authorization status:', authStatus);
+      getFcmToken();
     }
-  }
-
-  async getFcmToken() {
-    try {
-      const token = await messaging().getToken();
-      console.log('FCM Token:', token);
-      // TODO: Send this token to your backend
-      return token;
-    } catch (error) {
-      console.log('Error getting FCM token:', error);
-    }
-  }
-
-  listenForegroundNotifications() {
-    messaging().onMessage(async remoteMessage => {
-      Alert.alert(
-        remoteMessage.notification?.title || 'Notification',
-        remoteMessage.notification?.body || 'You have a new message'
-      );
-    });
-  }
-
-  listenBackgroundNotifications() {
-    messaging().setBackgroundMessageHandler(async remoteMessage => {
-      console.log('Notification in background:', remoteMessage);
-    });
   }
 }
 
-export default new PushNotification();
+const getFcmToken = async () => {
+  try {
+    await messaging().registerDeviceForRemoteMessages();
+    const token = await messaging().getToken();
+    const header = await AsyncStorage.getItem('UserToken');
+
+    console.log('FCM Token:', token);
+    console.log('Authorization Header:', `Bearer ${header}`);
+
+    if (!header) {
+      console.log('No user token found. FCM token not sent.');
+      return;
+    }
+
+    const data = { firebase_token: token };
+
+    const response = await fCMTokenSave(data, `Bearer ${header}`);
+    console.log("device_token response:", response);
+
+    if (!response?.success) {
+      throw new Error(response.message || 'Unknown error'); 
+    }
+
+    console.log("FCM Token saved successfully");
+  } catch (error) {
+    console.error('Error saving FCM token:', error.message);
+  }
+};
+
+
+
+
+// export const notificationListener = (onMessageReceived) => {
+//   console.log('onMessageReceived :',onMessageReceived);
+  
+//   messaging().onMessage(async remoteMessage => {
+//         console.log('Notification received in background:', remoteMessage);
+
+//     if (onMessageReceived) onMessageReceived(remoteMessage);
+//   });
+
+//   messaging().setBackgroundMessageHandler(async remoteMessage => {
+//     console.log('Notification received in background:', remoteMessage);
+//   });
+
+//   messaging().onNotificationOpenedApp(remoteMessage => {
+//         console.log('Notification received in background:', remoteMessage);
+
+//     if (onMessageReceived) onMessageReceived(remoteMessage, true);
+//   });
+
+//   messaging().getInitialNotification().then(remoteMessage => {
+//         console.log('Notification received in background:', remoteMessage);
+
+//     if (remoteMessage && onMessageReceived) onMessageReceived(remoteMessage, true);
+//   });
+// };
+
+// export const topicSubscribe = async (topic = "notifications") => {
+//   try {
+//     await messaging().subscribeToTopic(topic);
+//     console.log(`Subscribed to topic: ${topic}`);
+//   } catch (error) {
+//     console.error('Error subscribing to topic:', error);
+//   }
+// };
+
+
+export const notificationListener = () => {
+    messaging().onNotificationOpenedApp(remoteMessage => {
+      console.log('remoteMessage  :',remoteMessage);
+      
+        console.log(
+            'Notification caused app to open from background state:',
+            remoteMessage.notification,
+        );
+        if (remoteMessage.from == "/topics/notifications") {
+            router.push("notifications/notificationsScreen");
+        } else {
+            router.push("message/messageScreen");
+        }
+    });
+    messaging()
+        .getInitialNotification()
+        .then(remoteMessage => {
+            if (remoteMessage) {
+                console.log(
+                    'Notification caused app to open from quit state:',
+                    remoteMessage.notification,
+                );
+                // e.g. "Settings"
+            }
+        });
+};
+
+export const topicSubscribe = async (topic = "notifications") => {
+    messaging()
+        .subscribeToTopic(topic)
+        .then(() => console.log(`Subscribed to topic: ${topic}`));
+} 

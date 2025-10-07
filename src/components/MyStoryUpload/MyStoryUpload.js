@@ -7,6 +7,7 @@ import {
     Dimensions,
     FlatList,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
@@ -18,9 +19,10 @@ import PostStatusUpload from '../../api/PostStatusUpload';
 import GetMyStatus from '../../api/GetMyStatus';
 import { useFocusEffect } from '@react-navigation/native';
 import DeleteMyStatus from '../../api/DeleteMyStory';
+import Toast from 'react-native-toast-message';
 
 const MyStoryUpload = ({ source = [], onChange }) => {
-    const token = useSelector((state) => state.auth.user.access_token);
+    const token = useSelector(state => state.auth.token);
 
     const [mediaList, setMediaList] = React.useState([]);
     const [uploadedMedia, setUploadedMedia] = React.useState([]);
@@ -33,7 +35,11 @@ const MyStoryUpload = ({ source = [], onChange }) => {
             const remainingSlots = 6 - totalUsed;
 
             if (remainingSlots <= 0) {
-                Alert.alert('Limit Exceeded', 'You can only add up to 6 items total.');
+                Toast.show({
+                    type: 'error',
+                    text1: 'Limit Exceeded',
+                    text2: 'You can only add up to 6 items total.',
+                });
                 return;
             }
 
@@ -43,7 +49,11 @@ const MyStoryUpload = ({ source = [], onChange }) => {
             });
 
             if (files.length > remainingSlots) {
-                Alert.alert('Limit Exceeded', `You can only add ${remainingSlots} more item(s).`);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Limit Exceeded',
+                    text2: `You can only add ${remainingSlots} more item(s).`,
+                });
             }
 
             const newItems = files.slice(0, remainingSlots);
@@ -56,6 +66,9 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                 type: file.mime,
                 caption: '',
             }));
+
+            // Start Loading while uploading
+            setLoading(true);
 
             const uploadedPaths = [];
 
@@ -77,7 +90,9 @@ const MyStoryUpload = ({ source = [], onChange }) => {
             setUploadedMedia(prev => [...prev, ...uploadedPaths]);
             onChange?.(formattedItems);
         } catch (error) {
-            console.error('Media picking/upload error:', error);
+            // console.log('Media picking/upload error:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -87,6 +102,8 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                 Alert.alert('No media selected', 'Please add at least one image or video.');
                 return;
             }
+
+            setLoading(true);
 
             const formattedMedia = mediaList.map((file, index) => ({
                 uri: file.path,
@@ -100,15 +117,25 @@ const MyStoryUpload = ({ source = [], onChange }) => {
             });
 
             if (response?.success) {
-                Alert.alert('Success', 'Status posted successfully!');
-                removeAllMedia();
+                Toast.show({
+                    type: 'success',
+                    text1: 'Status Posted',
+                    text2: response.message || 'Status posted successfully.',
+                });
+                setMediaList([]);
+                setUploadedMedia([]);
                 fetchStories();
             } else {
-                Alert.alert('Failed', response?.message || 'Failed to post status');
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error',
+                    text2: response?.message || 'Something went wrong',
+                });
             }
         } catch (error) {
-            console.error('Status post error:', error);
-            Alert.alert('Error', 'Something went wrong while posting status.');
+            // console.log('PostStatusUpload error:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -138,8 +165,6 @@ const MyStoryUpload = ({ source = [], onChange }) => {
         const response = await GetMyStatus(token);
         if (response?.success && Array.isArray(response.data)) {
             setStoryList(response.data);
-        } else {
-            console.log('Error loading stories:', response.message);
         }
         setLoading(false);
     };
@@ -151,28 +176,33 @@ const MyStoryUpload = ({ source = [], onChange }) => {
         }, [])
     );
 
-    const handleDeleteStory = async (id) => {
-        console.log('Deleting story with ID:', id);
-        console.log('Using token:', token);
-
+    const handleDeleteStory = async id => {
         Alert.alert('Confirm', 'Delete this story?', [
             { text: 'Cancel' },
             {
                 text: 'Delete',
                 onPress: async () => {
                     try {
+                        setLoading(true);
                         const response = await DeleteMyStatus(id, token);
-                        console.log('DeleteMyStatus response:', response);
-
                         if (response?.success) {
-                            Alert.alert('Deleted', 'Status deleted successfully');
+                            Toast.show({
+                                type: 'success',
+                                text1: 'Status Deleted',
+                                text2: response.message || 'Status deleted successfully.',
+                            });
                             fetchStories();
                         } else {
-                            Alert.alert('Error', response?.message || 'Failed to delete');
+                            Toast.show({
+                                type: 'error',
+                                text1: 'Error',
+                                text2: response?.message || 'Something went wrong',
+                            });
                         }
                     } catch (error) {
-                        console.error('DeleteMyStatus failed:', error);
-                        Alert.alert('Error', 'Something went wrong while deleting the story.');
+                        // console.log('DeleteMyStatus failed:', error);
+                    } finally {
+                        setLoading(false);
                     }
                 },
             },
@@ -196,11 +226,7 @@ const MyStoryUpload = ({ source = [], onChange }) => {
         return (
             <View style={{ marginRight: 10 }}>
                 <TouchableOpacity
-                    onPress={() =>
-                        //item.type === 'uploaded'
-                        handleDeleteStory(item.id)
-                        // : removeMedia(index - storyList.length)
-                    }
+                    onPress={() => handleDeleteStory(item.id)}
                     style={styles.singleDeletBtnWrap}
                 >
                     <Text style={styles.singleDeletBtn}>X</Text>
@@ -225,6 +251,24 @@ const MyStoryUpload = ({ source = [], onChange }) => {
 
     return (
         <View style={styles.fullScreenContainer}>
+            {loading && (
+                <View
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        backgroundColor: 'rgba(0,0,0,0.3)',
+                        zIndex: 10,
+                    }}>
+                    <ActivityIndicator size="large" color="#fff" />
+                    <Text style={{ color: '#fff', marginTop: 10 }}>Please wait...</Text>
+                </View>
+            )}
+
             {storyList.length + mediaList.length < 6 ? (
                 <TouchableOpacity onPress={pickMedia} style={styles.pickBox}>
                     <Image source={Images.AddIcon} style={styles.icon} />
@@ -237,16 +281,13 @@ const MyStoryUpload = ({ source = [], onChange }) => {
             )}
 
             <View style={styles.totalWrap}>
-                <View>
-
-                    <Text style={styles.totalText}>
-                        Total Status : {combinedList.length}
-                    </Text>
-                </View>
+                <Text style={styles.totalText}>
+                    Total Status : {combinedList.length}
+                </Text>
                 {mediaList.length > 0 && (
                     <TouchableOpacity
                         onPress={handlePostStatus}
-                    style={{ marginRight: 20, alignSelf: 'center' }}
+                        style={{ marginRight: 20, alignSelf: 'center' }}
                     >
                         <Text style={{ color: 'blue', fontWeight: 'bold' }}>Send</Text>
                     </TouchableOpacity>
@@ -256,7 +297,6 @@ const MyStoryUpload = ({ source = [], onChange }) => {
             {combinedList.length > 0 && (
                 <FlatList
                     horizontal
-                    pagingEnabled
                     data={combinedList}
                     keyExtractor={(item, index) => `${item.id || item.path}_${index}`}
                     renderItem={renderItem}
@@ -264,8 +304,6 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                     showsHorizontalScrollIndicator={false}
                 />
             )}
-
-
         </View>
     );
 };

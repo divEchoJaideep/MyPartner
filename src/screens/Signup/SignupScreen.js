@@ -61,7 +61,7 @@ function SignupScreen() {
 
 
   return (
-    <Container>
+    <Container transparentStatusBar={true}>
       <Content hasHeader extraScrollHeight={1} contentContainerStyle={styles.container}>
         <LogoHeading heading="Sign up" />
         <View style={styles.signupLoginInputGroup}>

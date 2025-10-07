@@ -13,12 +13,15 @@ import styles from "./Style";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { blockedUsers, blockedUsersUnblock } from "../../api/api";
 import Loading from "../../components/Loading";
+import Toast from "react-native-toast-message";
 
 const BlockedUser = () => {
     const navigation = useNavigation();
 
     const [blockedUsersList, setBlockedUsersList] = useState([]);
-    const [loading, setLoading] = useState(false); 
+    const [loading, setLoading] = useState(false);
+    console.log('blockedUsersList :',blockedUsersList);
+    
 
     useEffect(() => {
         getBlockedUsers();
@@ -26,42 +29,51 @@ const BlockedUser = () => {
 
     const getBlockedUsers = async () => {
         try {
-            setLoading(true); 
+            setLoading(true);
             const token = await AsyncStorage.getItem("UserToken");
+            console.log('token :',token);
+            
             const res = await blockedUsers(token);
-            console.log("res blocked :", res);
+console.log('res :',res);
 
             if (res?.result) {
                 setBlockedUsersList(res?.data);
-                console.log("Blocked users fetched successfully:", res?.data);
             } else {
-                Alert.alert("Error", res?.message || "Failed to fetch blocked users.");
+                // Alert.alert("Error", res?.message || "Failed to fetch blocked users.");
             }
         } catch (err) {
             console.log("API error:", err);
         } finally {
-            setLoading(false); 
+            setLoading(false);
         }
     };
 
     const handleUnblock = async (user_id) => {
         const data = { user_id: user_id };
         try {
-            setLoading(true); 
+            setLoading(true);
             const token = await AsyncStorage.getItem("UserToken");
             const res = await blockedUsersUnblock(data, token);
             console.log('Unblock response:', res);
 
             if (res?.success === true) {
-                Alert.alert('Alert',res.message || "User unblocked successfully!");
-                getBlockedUsers(); 
+                Toast.show({
+                    type: 'success',
+                    text1: 'Success',
+                    text2: res?.message || 'User unblocked successfully',
+                });
+                getBlockedUsers();
             } else {
-                Alert.alert('Alert',res?.message || "Something went wrong");
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error',
+                    text2: res?.message || 'Failed to change password',
+                });
             }
         } catch (err) {
-            Alert.alert("Error", "Try again later!");
+            // Alert.alert("Error", "Try again later!");
         } finally {
-            setLoading(false); 
+            setLoading(false);
         }
     };
 
@@ -92,7 +104,9 @@ const BlockedUser = () => {
                 hasBackBtn
                 onBackPress={() => navigation.goBack()}
             />
+
             <View style={styles.container}>
+
                 <FlatList
                     data={blockedUsersList}
                     keyExtractor={(item) => item.id}
@@ -107,7 +121,7 @@ const BlockedUser = () => {
                     }
                 />
             </View>
-            <Loading loading={loading} /> 
+            <Loading loading={loading} />
         </Container>
     );
 };

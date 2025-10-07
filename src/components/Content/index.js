@@ -1,71 +1,35 @@
 import React from 'react';
-import {Keyboard} from 'react-native';
-import {ScrollView} from 'react-native-gesture-handler';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import { Keyboard } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import styles from './Styles';
 
 class Content extends React.Component {
-  keyboardWillShowSub;
-
-  keyboardWillHideSub;
-
-  rootRef;
-
   scrollviewRef;
+  rootRef;
 
   constructor(props) {
     super(props);
-    this.state = {
-      isVisible: true,
-    };
   }
 
-  componentDidMount = () => {
-    this.keyboardWillShowSub = Keyboard.addListener(
-      'keyboardDidShow',
-      this.keyboardWillShow,
-    );
-    this.keyboardWillHideSub = Keyboard.addListener(
-      'keyboardDidHide',
-      this.keyboardWillHide,
-    );
-  };
 
-  componentWillUnmount = () => {
-    this.keyboardWillShowSub.remove();
-    this.keyboardWillHideSub.remove();
-  };
-
-  keyboardWillShow = () => {
-    this.setState({isVisible: false});
-  };
-
-  keyboardWillHide = () => {
-    this.setState({isVisible: true});
-  };
 
   getStyle = () => {
-    const {style} = this.props;
+    const { style } = this.props;
     const tmpStyle = [styles.content];
-    if (style) {
-      tmpStyle.push(style);
-    }
+    if (style) tmpStyle.push(style);
     return tmpStyle;
   };
 
   getContentContainerStyle = () => {
-    const {contentContainerStyle, hasHeader} = this.props;
-    const style = [styles.contentContainerStyle];
-    if (contentContainerStyle) {
-      style.push(contentContainerStyle);
-    }
-    if (hasHeader === false) {
-      style.push({paddingTop: 0});
-    }
-    return style;
+    const { contentContainerStyle, hasHeader } = this.props;
+    const styleArr = [styles.contentContainerStyle];
+    if (contentContainerStyle) styleArr.push(contentContainerStyle);
+    if (hasHeader === false) styleArr.push({ paddingTop: 0 });
+    return styleArr;
   };
 
-  render = () => {
+  render() {
     const {
       children,
       extraScrollHeight,
@@ -76,40 +40,35 @@ class Content extends React.Component {
       onScroll,
       scrollEventThrottle,
       isBottomSheet,
-      snapToInterval,
+      style,
+      contentContainerStyle,
     } = this.props;
 
-    const style = this.getStyle();
-    const contentContainerStyle = this.getContentContainerStyle();
-    const ScrollComponent = isBottomSheet
-      ? ScrollView
-      : KeyboardAwareScrollView;
+    const ScrollComponent = isBottomSheet ? ScrollView : KeyboardAwareScrollView;
+
     return (
       <ScrollComponent
         enableResetScrollToCoords
-        scrollEnabled={scrollEnabled}
+        scrollEnabled={scrollEnabled !== false}
         bounces={false}
         automaticallyAdjustContentInsets={false}
-        resetScrollToCoords={disableKBDismissScroll ? undefined : {x: 0, y: 0}}
+        resetScrollToCoords={disableKBDismissScroll ? undefined : { x: 0, y: 0 }}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
-        ref={c => {
+        ref={(c) => {
           this.scrollviewRef = c;
           this.rootRef = c;
         }}
-        style={style}
+        style={this.getStyle()}
         onScroll={onScroll}
-        scrollEventThrottle={scrollEventThrottle}
-        contentContainerStyle={contentContainerStyle}
-        snapToAlignment="start"
-        pagingEnabled
-        decelerationRate="fast"
-        snapToInterval={snapToInterval}
-        extraScrollHeight={extraScrollHeight || 81}
-        showsVerticalScrollIndicator={showsVerticalScrollIndicator || false}>
+        scrollEventThrottle={scrollEventThrottle || 16}
+        contentContainerStyle={this.getContentContainerStyle()}
+        extraScrollHeight={extraScrollHeight || 20} 
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator || false}
+      >
         {children}
       </ScrollComponent>
     );
-  };
+  }
 }
 
 export default Content;
