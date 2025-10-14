@@ -37,12 +37,9 @@ const PublicStoryScreen = () => {
 
     const token = await AsyncStorage.getItem('UserToken');
     const response = await getUsFriendStory(token);
-    console.log('Friend Story API response:', response);
-
     if (response?.success && Array.isArray(response.data)) {
       setStoryList(response.data);
     } else {
-      // console.log('Error loading friend stories:', response.message);
     }
 
     setLoading(false);
@@ -97,7 +94,7 @@ const PublicStoryScreen = () => {
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <Text style={{ textAlign: 'center', marginTop: 20 }}>No status found.</Text>
+            <Text style={{ textAlign: 'center', marginTop: 20,color:'#aaa' }}>No status found.</Text>
           }
         />
       )}

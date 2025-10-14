@@ -8,7 +8,7 @@ import App from './src';
 import { name as appName } from './app.json';
 
 messaging().setBackgroundMessageHandler(async remoteMessage => {
-  console.log('Background message:', remoteMessage);
+  // console.log('Background message:', remoteMessage);
 
   // await notifee.displayNotification({
   //   title: remoteMessage?.notification?.title || 'New Notification',

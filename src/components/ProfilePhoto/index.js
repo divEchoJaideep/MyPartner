@@ -29,9 +29,10 @@ function ProfilePhoto(props) {
   const pickPicture = async () => {
     try {
       const image = await ImagePicker.openPicker({
-        width: 110,
-        height: 110,
-        cropping: true,
+        // width: 110,
+        // height: 110,
+         cropping: true,
+        compressImageQuality: 1,
       });
       const picked = { uri: image.path };
       setImageSource(picked);

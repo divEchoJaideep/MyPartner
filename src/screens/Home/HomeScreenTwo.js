@@ -33,8 +33,6 @@ const HomeScreenTwo = () => {
   const getProfile = async () => {
     const token = await AsyncStorage.getItem('UserToken');
     const response = await commonrequest("GET", profiledropdownUrl, "", token,)
-    console.log('response :',response);
-    
     dispatch(setPreDefineState(response?.data))
   };
   const [initialLoader, setInitialLoader] = useState(true);
@@ -45,7 +43,6 @@ const HomeScreenTwo = () => {
   const [loading, setLoading] = useState(false);
 
   const navigation = useNavigation();
-
   useFocusEffect(
     useCallback(() => {
       if (token) {
@@ -143,6 +140,7 @@ const HomeScreenTwo = () => {
   const handleFavRequest = async (userId) => {
     try {
       const response = await PostFavRequest({ token, userId });
+      console.log('response Like :',response);
       if (response && response.success) {
         updateStatus(userId, 'shortlist_status');
         Toast.show({
@@ -192,8 +190,6 @@ const HomeScreenTwo = () => {
   const handleCancelFavRequest = async (userId) => {
     try {
       const response = await PostUserCancelLike({ token, userId });
-      console.log('response :',response);
-      
       if (response && response.success) {
         updateStatus(userId, 'shortlist_status');
         Toast.show({
@@ -226,12 +222,12 @@ const HomeScreenTwo = () => {
   };
 
   return (
-    <Container transparentStatusBar={true}   >
-      <Content
+    <Container transparentStatusBar={true} lightContent  >
+      {/* <Content
         isBottomSheet
         scrollEventThrottle={16}
         // snapToInterval={tabContainerHeight}
-        >
+        > */}
         <SnapScrolling
           data={dashboardData}
           loadMore={loadMore}
@@ -244,7 +240,7 @@ const HomeScreenTwo = () => {
           handleCancelRequest={(id) => handleCancelRequest(id)}
           handleCancelFavRequest={(id) => handleCancelFavRequest(id)}
         />
-      </Content>
+      {/* </Content> */}
     </Container>
   );
 };

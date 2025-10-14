@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Image, Text, View, TouchableOpacity } from 'react-native';
+import { Image, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { GiftedChat, Bubble, InputToolbar, Day, Send, isSameDay } from 'react-native-gifted-chat';
 import firestore from '@react-native-firebase/firestore';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -41,21 +41,38 @@ export default function ChatScreen({ route }) {
     await resetUnreadCount(id, userBasicInfo.user_id);
   }, [conversationId, friend, userBasicInfo]);
 
+  // Add this at the top of your component
   const resetUnreadCount = useCallback(async (chatIdParam, userIdParam) => {
     if (!chatIdParam || !userIdParam) return;
     try {
       const chatRef = firestore().collection('chats').doc(chatIdParam);
-      await chatRef.set({ [`unreadCounts.${userIdParam}`]: 0 }, { merge: true });
+      // Get the current document
+      const docSnap = await chatRef.get();
+      if (!docSnap.exists) return;
+
+      const data = docSnap.data() || {};
+      const unreadCounts = { ...(data.unreadCounts || {}) };
+      unreadCounts[userIdParam] = 0; // reset the correct user's count
+
+      await chatRef.update({ unreadCounts }); // update the map properly
+      setMessages(prev => prev.map(msg => ({ ...msg }))); // optional re-render
     } catch (err) {
       console.log('Error resetting unread count:', err);
     }
   }, []);
+
 
   useFocusEffect(
     useCallback(() => {
       initChat();
     }, [initChat])
   );
+
+  useEffect(() => {
+    if (!chatId || !currentUser?.user_id) return;
+    resetUnreadCount(chatId, currentUser.user_id);
+  }, [chatId, currentUser?.user_id, resetUnreadCount]);
+
 
   const getBlockedUsers = async () => {
     try {
@@ -221,7 +238,7 @@ export default function ChatScreen({ route }) {
             { id: currentUser.user_id, name: currentUser.first_name ?? '', photo: currentUser.photo ?? '' },
             { id: friend.id, name: friend.name ?? '', photo: friend.photo ?? '', interestID: friend?.interestID },
           ],
-         participantIds: [String(currentUser.user_id), String(friend.id)],
+          participantIds: [String(currentUser.user_id), String(friend.id)],
 
           createdAt: firestore.FieldValue.serverTimestamp(),
           blocked: blockedDetails,
@@ -231,7 +248,7 @@ export default function ChatScreen({ route }) {
           },
         });
       } else {
-        await updateParticipantInfo(); 
+        await updateParticipantInfo();
       }
 
       await chatRef.collection('messages').add({
@@ -306,17 +323,22 @@ export default function ChatScreen({ route }) {
         onMoreBTN={() => setIsBlockModalVisible(true)}
       />
       <View style={styles.chatContainer}>
-        <GiftedChat
-          messages={messages}
-          user={{ _id: currentUser.user_id }}
-          onSend={onSend}
-          scrollToBottom
-          alwaysShowSend
-          renderBubble={renderBubble}
-          renderSend={renderSend}
-          renderInputToolbar={renderInputToolbar}
-          renderDay={renderDay}
-        />
+        {loading ? (
+          <ActivityIndicator size="small" color={Colors.pink} />
+        ) : (
+          <GiftedChat
+            messages={messages}
+            user={{ _id: currentUser.user_id }}
+            onSend={onSend}
+            scrollToBottom
+            alwaysShowSend
+            renderBubble={renderBubble}
+            renderSend={renderSend}
+            renderInputToolbar={renderInputToolbar}
+            renderDay={renderDay}
+          />
+        )}
+
       </View>
 
       {isBlockModalVisible && (

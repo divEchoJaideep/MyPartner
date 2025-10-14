@@ -26,6 +26,8 @@ function ChatScreen({ navigation }) {
   const [loading, setLoading] = React.useState(true);
   const [chats, setChats] = React.useState([]);
   const [userPhotos, setUserPhotos] = React.useState({});
+  console.log('chats :',chats);
+  
   const db = getFirestore();
 
   // Fetch all chat documents and filter by user ID

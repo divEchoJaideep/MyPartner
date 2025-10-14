@@ -164,7 +164,7 @@ console.log('Photo value before submit:', data.photo);
             onChange={image => handleTextChange("photo", image)}
           />
 
-          <Error error="" />
+          {/* <Error error="" /> */}
 
           <TextInputScreen
             defaultInput

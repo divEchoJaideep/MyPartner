@@ -9,19 +9,22 @@ import {
   ImageBackground,
   RefreshControl,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
-
+import { useNavigation } from '@react-navigation/native';
 import { isIphoneX } from '../../libs/Utils';
 import CommanText from '../CommanText';
 import { Colors, Images } from '../../theme';
-import { useNavigation } from '@react-navigation/native';
-import Container from '../Container';
 
 const { height, width } = Dimensions.get('window');
-const dynamicMargin = height <= 800 ? 10 : 0;
-const dynamicHeight = height <= 800 ? height : height -80
-const tabHeight = isIphoneX() ? 110 : -22;
-const tabContainerHeight = height - - tabHeight;
+
+const ITEM_HEIGHT =
+  height <= 740 ? height - 22 :
+  height <= 820 ? height - 90 :
+  height <= 900 ? height - 30 :
+  height - 50;
+
+const BOTTOM_PADDING = isIphoneX() ? 100 : Platform.OS === 'ios' ? 70 : 20;
 
 const SnapScrolling = ({
   data,
@@ -37,122 +40,133 @@ const SnapScrolling = ({
 }) => {
   const navigation = useNavigation();
 
+  /** Footer Loader when fetching more data */
   const renderFooter = () => {
     if (!loadingMore) return null;
-    return <ActivityIndicator style={{ marginVertical: 15 }} size="large" color={Colors.primary} />;
-  };
-
-  const renderItem = ({ item }) => {
     return (
-      <ImageBackground
-        source={{ uri: item.photo }}
-        resizeMode="cover"
-        style={[styles.videoContainer,]}>
-
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('ProfileData', {
-              userId: item?.user_id,
-              userProfileData: item,
-            })
-          }
-          style={styles.itemWrap}>
-
-          <View>
-            <View style={[styles.row, { width: width - 40, justifyContent: 'space-between', marginTop: 20 }]}>
-              <CommanText commanText={'Searching For'} commanTextstyle={styles.textStyle} />
-              <CommanText commanText={item?.searching_for} commanTextstyle={styles.textStyle} />
-            </View>
-
-            <View style={[styles.row, { width: width - 40, justifyContent: 'space-between' }]}>
-              {/* <CommanText commanText={item.documents === true ? 'Govt Id Uploaded' : 'Govt Id Not Uploaded'} commanTextstyle={styles.textStyle} /> */}
-              {/* <Image
-                source={Images.VerifyIconDoc}
-                resizeMode="contain"
-                style={[
-                  styles.cardInnerIcon,
-                  { tintColor: item.documents ? Colors.green : Colors.black },
-                ]}
-              /> */}
-            </View>
-          </View>
-
-          <View>
-            <View>
-              <View style={styles.row}>
-                <CommanText
-                  commanText={item.name}
-                  commanTextstyle={styles.textStyle}
-                />
-
-                {item.documents === true && (
-                  <Image
-                    source={Images.VerifyIconDoc}
-                    resizeMode="contain"
-                    style={[
-                      styles.cardInnerIcon,
-                      // { tintColor: item.documents ? Colors.green : Colors.black },
-                    ]}
-                  />
-                )}
-
-                <CommanText
-                  commanText={` ${item.age}, ${item.marital_status}`}
-                  commanTextstyle={styles.textStyle}
-                />
-              </View>
-              <View style={styles.row}>
-                <CommanText
-                  commanText={`${item.caste}, ${item.job_type}`}
-                  commanTextstyle={styles.textStyle}
-                />
-              </View>
-              <View style={styles.row}>
-                <CommanText commanText={`${item.city_name}`} commanTextstyle={styles.textStyle} />
-              </View>
-            </View>
-
-            <View style={styles.buttonWrap}>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  {
-                    backgroundColor: Colors.white,
-                    borderTopRightRadius: 25,
-                    borderBottomRightRadius: 25,
-                    borderTopLeftRadius: 7,
-                    borderBottomLeftRadius: 7
-                  },
-                ]}
-                onPress={() =>
-                  item.express_interest_status
-                    ? handleCancelRequest(item.user_id)
-                    : handleRequest(item.user_id)
-                }>
-                <CommanText
-                  commanText={item.express_interest_status ? 'Remove' : 'Request'}
-                  commanTextstyle={{ color: Colors.black, fontSize: 18 }}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() =>
-                  item.shortlist_status
-                    ? handleCancelFavRequest(item.user_id)
-                    : handleFavRequest(item.user_id)
-                }>
-                <CommanText
-                  commanText={item.shortlist_status ? 'Undo Fav' : 'Fav'}
-                  commanTextstyle={{ color: Colors.white, fontSize: 18 }}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </ImageBackground>
+      <ActivityIndicator
+        style={{ marginVertical: 15 }}
+        size="large"
+        color={Colors.primary}
+      />
     );
   };
+
+  /** Single Item Renderer */
+  const renderItem = ({ item }) => (
+    <ImageBackground
+      source={{ uri: item.photo }}
+      resizeMode="cover"
+      style={[styles.videoContainer, { height: ITEM_HEIGHT }]}
+    >
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate('ProfileData', {
+            userId: item?.user_id,
+            userProfileData: item,
+          })
+        }
+        style={styles.itemWrap}
+        activeOpacity={0.9}
+      >
+        {/* Top Section */}
+        <View>
+          <View
+            style={[
+              styles.row,
+              {
+                width: width - 40,
+                justifyContent: 'space-between',
+                marginTop: 20,
+              },
+            ]}
+          >
+            <CommanText
+              commanText={'Searching For'}
+              commanTextstyle={styles.textStyle}
+            />
+            <CommanText
+              commanText={item?.searching_for}
+              commanTextstyle={styles.textStyle}
+            />
+          </View>
+        </View>
+
+        <View style={[styles.cardInnerWrap, { bottom: BOTTOM_PADDING }]}>
+          <View>
+            <View style={styles.row}>
+              <CommanText
+                commanText={item.name}
+                commanTextstyle={styles.textStyle}
+              />
+
+              {item.documents && (
+                <Image
+                  source={Images.VerifyIconDoc}
+                  resizeMode="contain"
+                  style={styles.cardInnerIcon}
+                />
+              )}
+
+              <CommanText
+                commanText={` ${item.age}, ${item.marital_status}`}
+                commanTextstyle={styles.textStyle}
+              />
+            </View>
+
+            <View style={styles.row}>
+              <CommanText
+                commanText={`${item.caste}, ${item.job_type}`}
+                commanTextstyle={styles.textStyle}
+              />
+            </View>
+
+            <View style={styles.row}>
+              <CommanText
+                commanText={`${item.city_name}`}
+                commanTextstyle={styles.textStyle}
+              />
+            </View>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.buttonWrap}>
+            {/* Request / Remove */}
+            <TouchableOpacity
+              style={[styles.button, styles.requestButton]}
+              onPress={() =>
+                item.express_interest_status
+                  ? handleCancelRequest(item.user_id)
+                  : handleRequest(item.user_id)
+              }
+            >
+              <CommanText
+                commanText={
+                  item.express_interest_status ? 'Remove' : 'Request'
+                }
+                commanTextstyle={{ color: Colors.black, fontSize: 18 }}
+              />
+            </TouchableOpacity>
+
+            {/* Fav / Undo */}
+            <TouchableOpacity
+              style={[styles.button, styles.favButton]}
+              onPress={() =>
+                item.shortlist_status
+                  ? handleCancelFavRequest(item.user_id)
+                  : handleFavRequest(item.user_id)
+              }
+            >
+              <CommanText
+                commanText={item.shortlist_status ? 'Undo Fav' : 'Fav'}
+                commanTextstyle={{ color: Colors.white, fontSize: 18 }}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </ImageBackground>
+  );
 
   if (initialLoader) {
     return (
@@ -167,9 +181,10 @@ const SnapScrolling = ({
       data={data}
       keyExtractor={(item) => item.user_id.toString()}
       renderItem={renderItem}
-      pagingEnabled={true}
-      snapToInterval={height}          
-      decelerationRate='normal'
+      pagingEnabled
+      snapToInterval={ITEM_HEIGHT}
+      decelerationRate="fast"
+      showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -177,32 +192,29 @@ const SnapScrolling = ({
           tintColor={Colors.primary}
         />
       }
-      showsVerticalScrollIndicator={false}
       onEndReached={loadMore}
       onEndReachedThreshold={0.2}
       ListFooterComponent={renderFooter}
+      snapToAlignment="start"
+      bounces={false}
     />
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   videoContainer: {
-    height: dynamicHeight,
     width: width,
+    backgroundColor: Colors.black,
   },
   itemWrap: {
     flex: 1,
     paddingHorizontal: 20,
     paddingVertical: 30,
-    alignItems: 'baseline',
     justifyContent: 'space-between',
   },
   textStyle: {
@@ -214,34 +226,43 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    // gap: 10,
   },
   cardInnerIcon: {
     width: 20,
     height: 20,
-    // tintColor: Colors.white,
+    marginLeft: 6,
+  },
+  cardInnerWrap: {
+    position: 'absolute',
+    marginHorizontal: 20,
   },
   buttonWrap: {
-    // marginTop: 10,
     height: 55,
-    // // overflow: 'hidden',
     width: width - 40,
     flexDirection: 'row',
-    // position:"absolute",
-    marginBottom: dynamicMargin,
     alignItems: 'center',
     gap: 10,
     borderColor: Colors.white,
     borderWidth: 2,
     borderRadius: 10,
     backgroundColor: Colors.black,
+    marginTop: 10,
   },
   button: {
     width: (width - 40) / 2,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    // borderRadius:10,
-    height: 55
+    height: 55,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  requestButton: {
+    backgroundColor: Colors.white,
+    borderTopRightRadius: 25,
+    borderBottomRightRadius: 25,
+    borderTopLeftRadius: 7,
+    borderBottomLeftRadius: 7,
+  },
+  favButton: {
+    backgroundColor: Colors.primary,
   },
 });
 

@@ -16,10 +16,8 @@ export async function requestUserPermission() {
       }
     );
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log("Notification permission granted");
       getFcmToken();
     } else {
-      console.log("Notification permission denied");
     }
   } else { 
     const authStatus = await messaging().requestPermission();
@@ -28,7 +26,6 @@ export async function requestUserPermission() {
       authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
     if (enabled) {
-      console.log('Authorization status:', authStatus);
       getFcmToken();
     }
   }
@@ -40,76 +37,21 @@ const getFcmToken = async () => {
     const token = await messaging().getToken();
     const header = await AsyncStorage.getItem('UserToken');
 
-    console.log('FCM Token:', token);
-    console.log('Authorization Header:', `Bearer ${header}`);
-
     if (!header) {
-      console.log('No user token found. FCM token not sent.');
       return;
     }
 
     const data = { firebase_token: token };
 
-    const response = await fCMTokenSave(data, `Bearer ${header}`);
-    console.log("device_token response:", response);
-
+    const response = await fCMTokenSave(data, `Bearer ${header}`)
     if (!response?.success) {
       throw new Error(response.message || 'Unknown error'); 
     }
-
-    console.log("FCM Token saved successfully");
   } catch (error) {
-    console.error('Error saving FCM token:', error.message);
   }
 };
-
-
-
-
-// export const notificationListener = (onMessageReceived) => {
-//   console.log('onMessageReceived :',onMessageReceived);
-  
-//   messaging().onMessage(async remoteMessage => {
-//         console.log('Notification received in background:', remoteMessage);
-
-//     if (onMessageReceived) onMessageReceived(remoteMessage);
-//   });
-
-//   messaging().setBackgroundMessageHandler(async remoteMessage => {
-//     console.log('Notification received in background:', remoteMessage);
-//   });
-
-//   messaging().onNotificationOpenedApp(remoteMessage => {
-//         console.log('Notification received in background:', remoteMessage);
-
-//     if (onMessageReceived) onMessageReceived(remoteMessage, true);
-//   });
-
-//   messaging().getInitialNotification().then(remoteMessage => {
-//         console.log('Notification received in background:', remoteMessage);
-
-//     if (remoteMessage && onMessageReceived) onMessageReceived(remoteMessage, true);
-//   });
-// };
-
-// export const topicSubscribe = async (topic = "notifications") => {
-//   try {
-//     await messaging().subscribeToTopic(topic);
-//     console.log(`Subscribed to topic: ${topic}`);
-//   } catch (error) {
-//     console.error('Error subscribing to topic:', error);
-//   }
-// };
-
-
 export const notificationListener = () => {
     messaging().onNotificationOpenedApp(remoteMessage => {
-      console.log('remoteMessage  :',remoteMessage);
-      
-        console.log(
-            'Notification caused app to open from background state:',
-            remoteMessage.notification,
-        );
         if (remoteMessage.from == "/topics/notifications") {
             router.push("notifications/notificationsScreen");
         } else {
@@ -120,11 +62,6 @@ export const notificationListener = () => {
         .getInitialNotification()
         .then(remoteMessage => {
             if (remoteMessage) {
-                console.log(
-                    'Notification caused app to open from quit state:',
-                    remoteMessage.notification,
-                );
-                // e.g. "Settings"
             }
         });
 };
@@ -132,5 +69,7 @@ export const notificationListener = () => {
 export const topicSubscribe = async (topic = "notifications") => {
     messaging()
         .subscribeToTopic(topic)
-        .then(() => console.log(`Subscribed to topic: ${topic}`));
+        .then(() => 
+          console.log(`Subscribed to topic: ${topic}`)
+      );
 } 

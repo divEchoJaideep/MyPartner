@@ -1,5 +1,5 @@
 const LeftArrowBlack = require('../assets/images/LeftArrowBlack.png');
-const Logo = require('../assets/images/Logo.png');
+const Logo = require('../assets/images/partner_logo-removebg-preview.png');
 const OpenEye = require('../assets/images/Eye.png');
 const HideEye = require('../assets/images/HideEye.png');
 const ResetPswEye = require('../assets/images/ResetPswEye.png');
