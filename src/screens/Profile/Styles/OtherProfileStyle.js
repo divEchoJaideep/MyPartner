@@ -55,7 +55,7 @@ export default StyleSheet.create({
   },
   infoBox: {
     backgroundColor: Colors.white,
-    width: width - 40,
+    width: '100%',
     padding: 15,
     marginVertical: 8,
     borderRadius: 12,
@@ -65,10 +65,23 @@ export default StyleSheet.create({
     elevation: 2,
   },
   infoText: {
+
     fontSize: 16,
     color: Colors.black,
     marginBottom: 6,
-    textAlign:'left',
+    // textAlign:'left',
+  },
+  card:{
+    flexDirection:'row',
+    justifyContent:'space-between',
+  },
+  CardLableWrap:{
+    width:'40%',
+    alignItems:'flex-start',
+  },
+  CardTextWrap:{
+    width:'60%',
+    alignItems:'flex-end',
   },
 });
 

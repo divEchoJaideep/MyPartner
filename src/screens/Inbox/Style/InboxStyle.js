@@ -68,6 +68,8 @@ const styles = EStyleSheet.create({
     backgroundColor: Colors.white,
     paddingTop: '10rem',
     marginTop: '20rem',
+    marginLeft: '2rem',
+    marginRight: '2rem',
     borderRadius: '20rem',
     shadowColor: '#000000',
     shadowOffset: {

@@ -48,7 +48,7 @@ function ChatScreen({ navigation }) {
           const data = docSnap.data();
           const key = docSnap.id; // e.g., "93_94"
 
-          // ✅ Filter chats that include current user
+          // Filter chats that include current user
           if (!key.split('_').includes(String(userBasicInfo.user_id))) return;
 
           const unreadCounts = { ...(data.unreadCounts || {}) };

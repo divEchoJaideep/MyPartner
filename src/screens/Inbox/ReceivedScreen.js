@@ -21,7 +21,7 @@ import PostUserRequestAccepted from '../../api/PostUserRequestAccepted';
 import PostUserCancelRequest from '../../api/PostUserCancelRequest';
 import PostUserBlock from '../../api/PostUserBlock';
 import Toast from 'react-native-toast-message';
-import { interestCancel, interestReject } from '../../api/api';
+import { blockedUsers, blockedUsersUnblock, interestCancel, interestReject, userBlockRequest } from '../../api/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ReceivedRequest = () => {
@@ -31,6 +31,9 @@ const ReceivedRequest = () => {
   const [loading, setLoading] = useState();
   const [error, setError] = useState('');
   const [receivedRequest, setReceivedRequest] = useState([]);
+  const [blockedUsersList, setBlockedUsersList] = useState([]);
+  console.log('receivedRequest :', receivedRequest);
+  console.log('blockedUsersList :', blockedUsersList);
   const data = [
     {
       id: 1,
@@ -39,6 +42,7 @@ const ReceivedRequest = () => {
   useFocusEffect(
     useCallback(() => {
       getUserReceivedRequest();
+      getBlockedUsers();
     }, []),
   );
   // useEffect(() => {
@@ -93,7 +97,7 @@ const ReceivedRequest = () => {
     const token = await AsyncStorage.getItem('UserToken');
     const response = await interestCancel(data, token);
     console.log('response cancel : ', response);
-    if (response?.success ) {
+    if (response?.success) {
       Toast.show({
         type: 'success',
         text1: 'Request Cancelled',
@@ -105,18 +109,41 @@ const ReceivedRequest = () => {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: response?.message  || 'Failed to cancel request. Please try again.',
+        text2: response?.message || 'Failed to cancel request. Please try again.',
       });
       // setLoading(false);
 
     }
   }
 
-  const handleBlockRequest = async (userId) => {
-    const response = await PostUserBlock({
-      token: token,
-      userId,
-    });
+  const getBlockedUsers = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('UserToken');
+      const res = await blockedUsers(token);
+      console.log('Blocked Users API:', res);
+
+      if (res?.result) {
+        setBlockedUsersList(res?.data || []);
+      } else {
+        setBlockedUsersList([]);
+      }
+    } catch (err) {
+      console.log('API error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBlockRequest = async (
+    user_id
+  ) => {
+    const data = { user_id };
+
+    const token = await AsyncStorage.getItem('UserToken');
+    const response = await userBlockRequest(data, token);
+    console.log('response block:', response);
+
 
     if (response && response.success) {
       Toast.show({
@@ -125,6 +152,7 @@ const ReceivedRequest = () => {
         text2: response.message || 'User blocked successfully.',
       });
       getUserReceivedRequest();
+      getBlockedUsers();
       navigation.navigate('Topboard');
     } else {
       Toast.show({
@@ -135,7 +163,44 @@ const ReceivedRequest = () => {
     }
   };
 
+  const handleUnblock = async user_id => {
+    const data = { user_id };
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('UserToken');
+      const res = await blockedUsersUnblock(data, token);
+      console.log('Unblock response:', res);
+
+      if (res?.success === true) {
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: res?.message || 'User unblocked successfully.',
+        });
+        await Promise.all([getBlockedUsers(), getUserReceivedRequest()]);
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: res?.message || 'Failed to unblock user.',
+        });
+      }
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Something went wrong while unblocking user.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   const renderItem = ({ item }) => {
+    const isBlocked = blockedUsersList.some(
+      (blockedUser) => blockedUser.user_id === item.user_id
+    );
     console.log('item : ', item);
     return (
       <View style={styles.flatlistView}>
@@ -190,8 +255,8 @@ const ReceivedRequest = () => {
 
           <TouchableOpacity
             style={[styles.buttonName, styles.rightBtn]}
-            onPress={() => handleBlockRequest(item.id)}>
-            <CommanText commanText="Block" commanTextstyle={styles.btnText} />
+            onPress={() => isBlocked ? handleUnblock(item.user_id) : handleBlockRequest(item.user_id)}>
+            <CommanText commanText={isBlocked ? "Unblock" : "Block"} commanTextstyle={styles.btnText} />
           </TouchableOpacity>
         </View>
       </View>
@@ -222,11 +287,11 @@ const ReceivedRequest = () => {
           </View>
         )}
         <CommanBtn
-              btnText="Search Partner"
-              onBtnPress={() => navigation.navigate('Home')}
-              commanBtnTextStyle={styles.commanBtnTextStyle}
-              commanBtnStyle={styles.btnStyle}
-            />
+          btnText="Search Partner"
+          onBtnPress={() => navigation.navigate('Home')}
+          commanBtnTextStyle={styles.commanBtnTextStyle}
+          commanBtnStyle={styles.btnStyle}
+        />
       </Content>
     </Container>
   );

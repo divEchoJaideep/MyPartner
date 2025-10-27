@@ -2,13 +2,14 @@ import React, { useContext, useEffect, useState, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import messaging from '@react-native-firebase/messaging';
 import AppNavigation from './navigation/AppNavigation';
-import { navigationRef } from './navigation/ReduxNavigation';
+// import { navigationRef } from './navigation/ReduxNavigation';
 import Toast from 'react-native-toast-message';
 import { requestUserPermission } from './services/PushNotification';
 import { displayNotification } from './utils/diplayNotification';
 import useCheckProfile from './AppInitializer';
 import { AuthContext } from './context/AuthContext';
 import { UnreadProvider } from './context/UnreadContext';
+import {navigationRef} from './navigation/RootNavigation';
 
 
 const linking = {

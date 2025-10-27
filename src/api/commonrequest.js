@@ -1,8 +1,12 @@
 import axios from "axios";
+import Toast from "react-native-toast-message";
+import { globalLogout } from "../utils/globalLogout"; 
 
-async function commonrequest(method, url, body, token) {
-  // console.log('body common reques :',body);
-  
+let isLoggingOut = false;
+
+axios.defaults.baseURL = "https://clients.divecho.com/matrimony/api";
+
+async function commonrequest(method, url, body = {}, token = "") {
   try {
     const isFormData = body instanceof FormData;
 
@@ -14,40 +18,32 @@ async function commonrequest(method, url, body, token) {
         : { "Content-Type": "application/json" }),
     };
 
-    if (isFormData) {
-      // console.log("Sending FormData...");
-      try {
-        if (typeof body.getParts === "function") {
-          // console.log("FormData parts:", body.getParts());
-        } else {
-          // console.log("FormData object:", body);
-        }
-      } catch (err) {
-        // console.log("FormData Debug Error:", err);
-      }
-    } else {
-      // console.log("Sending JSON:", body);
-    }
-
-    const config = {
-      method,
-      url,
-      headers,
-      data: body,
-    };
-
-    const response = await axios(config);
+    const response = await axios({ method, url, headers, data: body });
     return response.data;
-
   } catch (error) {
-    console.log("Axios Error:", error?.response || error?.message);
+    const status = error?.response?.status;
+    const message = error?.response?.data?.message;
+
+    if ((status === 401 || message === "Unauthenticated") && !isLoggingOut) {
+      isLoggingOut = true;
+
+      Toast.show({
+        type: "error",
+        text1: "Logged Out",
+        text2: "Your account is logged into another device.",
+      });
+
+      await globalLogout();
+
+      setTimeout(() => {
+        isLoggingOut = false;
+      }, 3000);
+    }
 
     return {
       success: false,
       message:
-        error?.response?.data?.message ||
-        error.message ||
-        "Error connecting to server",
+        message || error.message || "Error connecting to server",
     };
   }
 }

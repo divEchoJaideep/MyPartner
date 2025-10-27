@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    width:width - 43,
+    width:width - 47,
     marginTop:3,
     alignItems: 'center',
     backgroundColor: '#fff',
@@ -45,6 +45,9 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   name: {
     fontSize: 16,
@@ -82,6 +85,11 @@ const styles = StyleSheet.create({
     color: '#ddd',
     fontSize: 14,
     marginLeft:10,
+  },
+  icon:{
+    width:24,
+    height:24,
+    // tintColor:'#8e44ad',
   },
 })
 

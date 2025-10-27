@@ -210,44 +210,152 @@ const ProfileData = () => {
         <View style={styles.bottomContainer}>
           <CommanHeading headingText heading="Basic Information" />
           <View style={styles.infoBox}>
-            <CommanText commanText={`Name: ${capitalize(profile?.basic_info?.first_name)} ${capitalize(profileInfo.subCaste)}`} commanTextstyle={styles.infoText} />
-            <CommanText commanText={`Married Status: ${capitalize(profileInfo.merriageStatus)}`} commanTextstyle={styles.infoText} />
-            <CommanText commanText={`Searching For: ${capitalize(profileInfo.Searching)}`} commanTextstyle={styles.infoText} />
-            <CommanText commanText={`Religion: ${capitalize(profileInfo.religion)}`} commanTextstyle={styles.infoText} />
-            <CommanText commanText={`Year of Birth: ${profile?.basic_info?.birth_year}`} commanTextstyle={styles.infoText} />
-            <CommanText
-              commanText={`Caste: ${capitalize(profileInfo.caste)} ( ${capitalize(profileInfo.subCaste)} )`}
-              commanTextstyle={styles.infoText}
-            />
-            <CommanText
-              commanText={`Address: ${profileInfo.city} ${profileInfo.state} ${profileInfo.country}`}
-              commanTextstyle={styles.infoText}
-            />
+            <View style={styles.card}>
+               <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Name:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={` ${capitalize(profile?.basic_info?.first_name)} ${capitalize(profileInfo.subCaste)}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Married Status:`} commanTextstyle={styles.infoText} />
+              </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={` ${capitalize(profileInfo.merriageStatus)}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+               <View style={styles.CardLableWrap}>
+                <CommanText commanText={`Searching For:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={` ${capitalize(profileInfo.Searching)}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+                <CommanText commanText={`Religion:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={` ${capitalize(profileInfo.religion)}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Year of Birth:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={` ${profile?.basic_info?.birth_year}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Caste:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={` ${capitalize(profileInfo.caste)} ( ${capitalize(profileInfo.subCaste)} )`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Address:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={`${profileInfo.city} ${profileInfo.state} ${profileInfo.country}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+
           </View>
 
           <CommanHeading headingText heading="Education & Career" />
           <View style={styles.infoBox}>
-            <CommanText commanText={`Education Type: ${capitalize(profileInfo.educationTypeTitle)}`} commanTextstyle={styles.infoText} />
-            <CommanText
-              commanText={`${profile?.education?.education_type === '1'
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Education Type:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={`${capitalize(profileInfo.educationTypeTitle)}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+<CommanText commanText={`${profile?.education?.education_type === '1'
                 ? 'Qualification'
                 : profile?.education?.education_type === '2'
                   ? 'Professional Degree / Diploma'
                   : 'Achievements'
-                }: ${capitalize(profileInfo.educationTitle)}`}
-              commanTextstyle={styles.infoText}
-            />
-            <CommanText commanText={`Job: ${capitalize(profileInfo.jobType)}`} commanTextstyle={styles.infoText} />
-            <CommanText commanText={`Occupation: ${profile.career?.occupation}`} commanTextstyle={styles.infoText} />
-            <CommanText commanText={`Salary: ${profile.career?.Income || 'N/A'}`} commanTextstyle={styles.infoText} />
+                }:`} commanTextstyle={styles.infoText} />
+                </View>
+              
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={` ${capitalize(profileInfo.educationTitle)}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Job:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={`${capitalize(profileInfo.jobType)}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Occupation:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={`${profile.career?.occupation}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Salary:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={`${profile.career?.Income || 'N/A'}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+
+
           </View>
 
           <CommanHeading headingText heading="Other Information" />
           <View style={styles.infoBox}>
             {/* <CommanText commanText={`Member Code: ${profile.basic_info?.user_id}`} commanTextstyle={styles.infoText} /> */}
-            <CommanText commanText={`Physical : ${profileInfo?.physicalAttribute}`} commanTextstyle={styles.infoText} />
-            <CommanText commanText={`Height : ${profile?.physical_attributes?.height}`} commanTextstyle={styles.infoText} />
-            <CommanText commanText={`Languages: ${profile.known_languages?.map(l => l.name).join(', ')}`} commanTextstyle={styles.infoText} />
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Physical:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={`${profileInfo?.physicalAttribute}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Height:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={`${profile?.physical_attributes?.height}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Body Type:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={`${profileInfo?.physicalAttribute}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+              <CommanText commanText={`Languages:`} commanTextstyle={styles.infoText} />
+               </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={`${profile.known_languages?.map(l => l.name).join(', ')}`} commanTextstyle={styles.infoText} />
+              </View>
+            </View>
           </View>
         </View>
       </Content>
