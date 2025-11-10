@@ -10,7 +10,6 @@ const MyStory = () => {
   const [storyMedia, setStoryMedia] = useState(null);
 
   const handleStoryChange = media => {
-    // console.log('Selected media:', media);
     setStoryMedia(media); 
   };
 

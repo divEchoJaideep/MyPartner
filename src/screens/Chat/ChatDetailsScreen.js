@@ -14,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function ChatScreen({ route }) {
   const { friend, conversationId } = route.params || {};
   const navigation = useNavigation();
+
   const token = useSelector(state => state.auth.token);
   const userBasicInfo = useSelector(state => state.userDetails.userBasicInfo);
 
@@ -23,67 +24,72 @@ export default function ChatScreen({ route }) {
   const [blockedByMe, setBlockedByMe] = useState(false);
   const [blockedMe, setBlockedMe] = useState(false);
   const [blockedUsersList, setBlockedUsersList] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [isBlockModalVisible, setIsBlockModalVisible] = useState(false);
 
   const isChatBlocked = blockedByMe || blockedMe;
+  const normalizeId = id => String(id ?? '');
 
+  // -------------------- RESET UNREAD COUNT --------------------
+  const resetUnreadCount = useCallback(async (chatIdParam, userIdParam) => {
+    if (!chatIdParam || !userIdParam) return;
+
+    try {
+      const chatRef = firestore().collection('chats').doc(chatIdParam);
+      await firestore().runTransaction(async transaction => {
+        const doc = await transaction.get(chatRef);
+        if (!doc.exists) {
+          transaction.set(chatRef, {
+            unreadCounts: { [String(userIdParam)]: 0 },
+            createdAt: firestore.FieldValue.serverTimestamp(),
+          });
+        } else {
+          transaction.update(chatRef, {
+            [`unreadCounts.${String(userIdParam)}`]: 0,
+            updatedAt: firestore.FieldValue.serverTimestamp(),
+          });
+        }
+      });
+
+    } catch (error) {
+    }
+  }, []);
+
+  // -------------------- INIT CHAT --------------------
   const initChat = useCallback(async () => {
     if (!userBasicInfo || !friend) return;
 
-    const ids = [String(userBasicInfo.user_id), String(friend.id)].sort();
+    const ids = [normalizeId(userBasicInfo.user_id), normalizeId(friend.id)].sort();
     const id = conversationId ?? ids.join('_');
-
     setChatId(id);
     setCurrentUser(userBasicInfo);
 
     await resetUnreadCount(id, userBasicInfo.user_id);
-  }, [conversationId, friend, userBasicInfo]);
+  }, [conversationId, friend, userBasicInfo, resetUnreadCount]);
 
-  // Add this at the top of your component
-  const resetUnreadCount = useCallback(async (chatIdParam, userIdParam) => {
-    if (!chatIdParam || !userIdParam) return;
-    try {
-      const chatRef = firestore().collection('chats').doc(chatIdParam);
-      // Get the current document
-      const docSnap = await chatRef.get();
-      if (!docSnap.exists) return;
-
-      const data = docSnap.data() || {};
-      const unreadCounts = { ...(data.unreadCounts || {}) };
-      unreadCounts[userIdParam] = 0; // reset the correct user's count
-
-      await chatRef.update({ unreadCounts }); // update the map properly
-      setMessages(prev => prev.map(msg => ({ ...msg }))); // optional re-render
-    } catch (err) {
-      console.log('Error resetting unread count:', err);
-    }
-  }, []);
-
-
+  // -------------------- ON FOCUS --------------------
   useFocusEffect(
     useCallback(() => {
       initChat();
     }, [initChat])
   );
 
+  // -------------------- UNREAD RESET EFFECT --------------------
   useEffect(() => {
     if (!chatId || !currentUser?.user_id) return;
     resetUnreadCount(chatId, currentUser.user_id);
   }, [chatId, currentUser?.user_id, resetUnreadCount]);
 
-
+  // -------------------- FETCH BLOCKED USERS --------------------
   const getBlockedUsers = async () => {
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem("UserToken");
+      const token = await AsyncStorage.getItem('UserToken');
       const res = await blockedUsers(token);
-      if (res?.result) {
-        setBlockedUsersList(res?.data || []);
-      }
+      if (res?.result) setBlockedUsersList(res?.data || []);
     } catch (err) {
-      console.log("API error:", err);
     } finally {
       setLoading(false);
     }
@@ -93,19 +99,19 @@ export default function ChatScreen({ route }) {
     getBlockedUsers();
   }, []);
 
+  // -------------------- UPDATE BLOCKED STATUS --------------------
   useEffect(() => {
     if (!blockedUsersList || !friend) return;
-    const blocked = blockedUsersList.some(user => String(user.user_id) === String(friend?.id));
-    if (blocked) setIsBlocked(true);
+    setIsBlocked(blockedUsersList.some(user => normalizeId(user.user_id) === normalizeId(friend.id)));
   }, [blockedUsersList, friend]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!isBlocked) return;
-      handleBlock();
-    }, [isBlocked])
-  );
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     if (isBlocked) handleBlock();
+  //   }, [isBlocked])
+  // );
 
+  // -------------------- FIRESTORE LISTENERS --------------------
   useEffect(() => {
     if (!chatId || !friend || !currentUser?.user_id) return;
 
@@ -128,17 +134,20 @@ export default function ChatScreen({ route }) {
         resetUnreadCount(chatId, currentUser.user_id);
       });
 
-    const unsubscribeBlock = chatRef.onSnapshot(doc => {
+    // Listen to block status
+    const unsubscribeBlock = chatRef.onSnapshot(async doc => {
       const data = doc.data() || {};
       const blockedByFirestore = data.blockedBy || [];
 
-      const blockedByMeAPI = blockedUsersList.some(u => String(u.user_id) === String(friend.id));
-      const blockedByMeFirestore = blockedByFirestore.includes(currentUser.user_id);
-      setBlockedByMe(blockedByMeAPI || blockedByMeFirestore);
+      const myId = Number(currentUser.user_id);
+      const friendId = Number(friend.id);
+      const iBlocked = blockedByFirestore.includes(myId);
+      const theyBlocked = blockedByFirestore.includes(friendId);
 
-      const blockedMeAPI = blockedUsersList.some(u => String(u.user_id) === String(currentUser.user_id));
-      const blockedMeFirestore = blockedByFirestore.includes(friend.id);
-      setBlockedMe(blockedMeAPI || blockedMeFirestore);
+      setBlockedByMe(iBlocked);
+      setBlockedMe(theyBlocked);
+
+      await autoSyncBlockStatus(blockedByFirestore, blockedUsersList, currentUser, friend, chatId);
     });
 
     return () => {
@@ -147,15 +156,51 @@ export default function ChatScreen({ route }) {
     };
   }, [chatId, currentUser?.user_id, friend?.id, blockedUsersList, resetUnreadCount]);
 
+  // -------------------- BLOCK / UNBLOCK --------------------
   const handleBlock = async () => {
-    if (!chatId || !currentUser?.user_id) return;
-    const chatRef = firestore().collection('chats').doc(chatId);
-    await chatRef.set({
-      blockedBy: firestore.FieldValue.arrayUnion(currentUser.user_id),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
-    handleBlockApi();
-  };
+  if (!chatId || !currentUser?.user_id) return;
+
+  setLoading(true);
+  const chatRef = firestore().collection('chats').doc(chatId);
+  const userId = String(currentUser.user_id);
+
+  try {
+    await chatRef.set(
+      {
+        blockedBy: firestore.FieldValue.arrayUnion(userId),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    const token = await AsyncStorage.getItem('UserToken');
+    const response = await userBlockRequest({ user_id: friend?.id }, token);
+
+    if (response?.success) {
+      Toast.show({
+        type: 'success',
+        text1: 'User Blocked',
+        text2: response.message || 'Blocked successfully.',
+      });
+
+      // 🔹 Step 3: Update UI instantly
+      setBlockedByMe(true);
+      setIsBlocked(true);
+      await getBlockedUsers();
+
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: response?.message || 'Block failed',
+      });
+    }
+  } catch (error) {
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const handleBlockApi = async () => {
     const data = { user_id: friend?.id };
@@ -164,30 +209,39 @@ export default function ChatScreen({ route }) {
       const response = await userBlockRequest(data, token);
       if (response?.success) {
         Toast.show({ type: 'success', text1: 'User Blocked', text2: response.message || 'Blocked successfully.' });
-      } else {
-        // Toast.show({ type: 'error', text1: 'Error', text2: response?.message || 'Failed to block user.' });
       }
-    } catch {
-      // Toast.show({ type: 'error', text1: 'Error', text2: 'Something went wrong.' });
+    } catch (err) {
     }
   };
 
   const handleUnblock = async () => {
     if (!chatId || !currentUser?.user_id) return;
+
+    setLoading(true);
     const chatRef = firestore().collection('chats').doc(chatId);
-    await chatRef.set({
-      blockedBy: firestore.FieldValue.arrayRemove(currentUser.user_id),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
-    handleUnblockApi({ user_id: friend?.id });
+
+    try {
+      await chatRef.set(
+        {
+          blockedBy: firestore.FieldValue.arrayRemove(String(currentUser.user_id)), 
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      await handleUnblockApi(friend?.id);
+          } catch (error) {
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleUnblockApi = async (user_id) => {
-    const data = { user_id };
+  const handleUnblockApi = async user_id => {
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem("UserToken");
-      const res = await blockedUsersUnblock(data, token);
+      const token = await AsyncStorage.getItem('UserToken');
+      const res = await blockedUsersUnblock({ user_id }, token);
+
       if (res?.success) {
         Toast.show({ type: 'success', text1: 'Success', text2: res?.message || 'User unblocked successfully' });
         getBlockedUsers();
@@ -199,24 +253,89 @@ export default function ChatScreen({ route }) {
     }
   };
 
-  const updateParticipantInfo = async () => {
-    if (!chatId || !currentUser?.user_id) return;
+  const autoSyncBlockStatus = async (blockedByFirestore, blockedUsersList, currentUser, friend, chatId) => {
+    try {
+      if (!chatId || !currentUser?.user_id || !friend?.id) return;
+
+      const myId = Number(currentUser.user_id);
+      const friendId = Number(friend.id);
+
+      const isBlockedInFirestore = blockedByFirestore.includes(myId);
+      const isBlockedInAPI = blockedUsersList.some(
+        u => String(u.user_id) === String(friendId)
+      );
+
+      // 🔹 Case 1: API says blocked, Firestore not → add Firestore only
+      if (isBlockedInAPI && !isBlockedInFirestore) {
+        const chatRef = firestore().collection('chats').doc(chatId);
+        await chatRef.set(
+          {
+            blockedBy: firestore.FieldValue.arrayUnion(myId),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+
+      // 🔹 Case 2: Firestore says blocked, API not → remove from Firestore only
+      if (!isBlockedInAPI && isBlockedInFirestore) {
+        const chatRef = firestore().collection('chats').doc(chatId);
+        await chatRef.set(
+          {
+            blockedBy: firestore.FieldValue.arrayRemove(myId),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+
+      // 🔹 Case 3: Both same → do nothing
+    } catch (error) {
+      // console.log('🔥 Auto block/unblock sync error:', error);
+    }
+  };
+
+
+  // -------------------- UPDATE PARTICIPANT INFO --------------------
+  const updateParticipantInfo = async (chatId, currentUser, friend) => {
+
+    if (!chatId || !currentUser?.user_id || !friend?.id) return;
+
     const chatRef = firestore().collection('chats').doc(chatId);
     const docSnap = await chatRef.get();
     if (!docSnap.exists) return;
 
-    const data = docSnap.data();
-    const participants = data.participants || [];
-
-    const updatedParticipants = participants.map(p =>
-      p.id === currentUser.user_id
-        ? { ...p, name: currentUser.first_name ?? '', photo: currentUser.photo ?? '' }
-        : p
+    const data = docSnap.data() || {};
+    let participants = data.participants || [];
+    const userExists = participants.some(
+      p => String(p.id) === String(currentUser.user_id)
+    );
+    const friendExists = participants.some(
+      p => String(p.id) === String(friend.id)
     );
 
-    await chatRef.update({ participants: updatedParticipants });
+    if (!userExists) {
+      participants.push({
+        id: String(currentUser.user_id),
+        name: currentUser.first_name ?? '',
+        photo: currentUser.photo ?? '',
+      });
+    }
+
+    if (!friendExists) {
+      participants.push({
+        id: String(friend.id),
+        name: friend.name ?? '',
+        photo: friend.photo ?? '',
+        interestID: friend?.interestID ?? '',
+      });
+    }
+
+    await chatRef.update({ participants });
   };
 
+
+  // -------------------- SEND MESSAGE --------------------
   const blockedDetails = {
     blockedStatus: isBlocked ? 1 : 0,
     blockedState: isBlocked ? 'Blocked' : 'Unblocked',
@@ -224,60 +343,90 @@ export default function ChatScreen({ route }) {
     blockedMe: isBlocked ? blockedMe : '',
   };
 
-  const onSend = useCallback(async (newMessages) => {
-    if (!newMessages.length || !currentUser?.user_id || !chatId) return;
+  const onSend = useCallback(
+    async newMessages => {
+      if (!newMessages.length || !currentUser?.user_id || !chatId) return;
 
-    const msg = newMessages[0];
-    const chatRef = firestore().collection('chats').doc(chatId);
+      const msg = newMessages[0];
+      const currentUserId = String(currentUser.user_id);
+      const friendId = String(friend.id);
+      const chatRef = firestore().collection('chats').doc(chatId);
 
-    try {
-      const docSnap = await chatRef.get();
-      if (!docSnap.exists) {
-        await chatRef.set({
-          participants: [
-            { id: currentUser.user_id, name: currentUser.first_name ?? '', photo: currentUser.photo ?? '' },
-            { id: friend.id, name: friend.name ?? '', photo: friend.photo ?? '', interestID: friend?.interestID },
-          ],
-          participantIds: [String(currentUser.user_id), String(friend.id)],
+      try {
+        await firestore().runTransaction(async transaction => {
+          const chatDoc = await transaction.get(chatRef);
+          if (!chatDoc.exists) {
+            transaction.set(chatRef, {
+              participants: [
+                {
+                  id: currentUserId,
+                  name: currentUser.first_name ?? '',
+                  photo: currentUser.photo ?? '',
+                },
+                {
+                  id: friendId,
+                  name: friend.name ?? '',
+                  photo: friend.photo ?? '',
+                  interestID: friend?.interestID ?? '',
+                },
+              ],
+              participantIds: [currentUserId, friendId],
+              unreadCounts: { [currentUserId]: 0, [friendId]: 1 },
+              lastMessage: msg.text,
+              createdAt: firestore.FieldValue.serverTimestamp(),
+              updatedAt: firestore.FieldValue.serverTimestamp(),
+              blocked: {
+                blockedState: 'Unblocked',
+                blockedBy: '',
+                blockedMe: '',
+                blockedStatus: 0,
+              },
 
-          createdAt: firestore.FieldValue.serverTimestamp(),
-          blocked: blockedDetails,
-          unreadCounts: {
-            [currentUser.user_id]: 0,
-            [friend.id]: 0
-          },
+            });
+          }
+
+          // ✅ Add message to subcollection
+          const msgRef = chatRef.collection('messages').doc();
+          transaction.set(msgRef, {
+            text: msg.text,
+            senderId: currentUserId,
+            senderPhoto: currentUser.photo ?? '',
+            createdAt: firestore.FieldValue.serverTimestamp(),
+          });
+
+          transaction.set(
+            chatRef,
+            {
+              lastMessage: msg.text,
+              updatedAt: firestore.FieldValue.serverTimestamp(),
+              unreadCounts: {
+                [String(currentUserId)]: 0,
+                [String(friendId)]: firestore.FieldValue.increment(1),
+              },
+            },
+            { merge: true }
+          );
+
+
         });
-      } else {
-        await updateParticipantInfo();
+
+        await updateParticipantInfo(chatId, currentUser, friend);
+        chatNotification({ user_id: friend.id }, token).catch(console.log);
+      } catch (error) {
+        // console.log('🔥 Message send failed:', error);
       }
+    },
+    [chatId, currentUser, friend, token]
+  );
 
-      await chatRef.collection('messages').add({
-        text: msg.text,
-        senderId: currentUser.user_id,
-        senderPhoto: currentUser.photo ?? '',
-        createdAt: firestore.FieldValue.serverTimestamp(),
-      });
 
-      await chatRef.update({
-        lastMessage: msg.text,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
-        blocked: blockedDetails,
-        [`unreadCounts.${friend.id}`]: firestore.FieldValue.increment(1),
-      });
-
-      chatNotification({ user_id: friend.id }, token).catch(err => console.log(err));
-    } catch (error) {
-      console.log('Message send failed:', error);
-    }
-  }, [chatId, currentUser, friend, token, blockedDetails]);
-
-  // ---------------- RENDER ----------------
+  // -------------------- UI --------------------
   const renderBubble = props => (
     <Bubble
       {...props}
       wrapperStyle={{
-        left: { backgroundColor: Colors.white, borderColor: Colors.lightGray, borderWidth: 1, borderTopStartRadius: 12, borderTopEndRadius: 12, borderBottomStartRadius: 0, borderBottomEndRadius: 12 },
-        right: { backgroundColor: Colors.pink, borderTopStartRadius: 12, borderTopEndRadius: 12, borderBottomStartRadius: 12, borderBottomEndRadius: 0, borderWidth: 1, borderColor: Colors.pink },
+        left: { backgroundColor: Colors.white, borderColor: Colors.lightGray, borderWidth: 1 },
+        right: { backgroundColor: Colors.pink, borderWidth: 1, borderColor: Colors.pink },
       }}
       textStyle={{ left: { color: Colors.black }, right: { color: Colors.white } }}
     />
@@ -303,14 +452,13 @@ export default function ChatScreen({ route }) {
         </View>
       );
     }
-    return <View style={styles.chatInputContainer}><InputToolbar {...props} containerStyle={styles.chatInputContainerStyle} /></View>;
+    return <InputToolbar {...props} containerStyle={styles.chatInputContainerStyle} />;
   };
 
   const renderDay = props =>
-    props.currentMessage?.createdAt &&
-    !isSameDay(props.currentMessage, props.previousMessage) && (
+    props.currentMessage?.createdAt && !isSameDay(props.currentMessage, props.previousMessage) ? (
       <Day {...props} textStyle={styles.dateTextStyle} containerStyle={styles.dateTextContainerStyle} />
-    );
+    ) : null;
 
   return (
     <Container style={styles.container}>
@@ -322,13 +470,14 @@ export default function ChatScreen({ route }) {
         onBackPress={() => navigation.goBack()}
         onMoreBTN={() => setIsBlockModalVisible(true)}
       />
+
       <View style={styles.chatContainer}>
         {loading ? (
           <ActivityIndicator size="small" color={Colors.pink} />
         ) : (
           <GiftedChat
             messages={messages}
-            user={{ _id: currentUser.user_id }}
+            user={{ _id: String(currentUser.user_id) }}
             onSend={onSend}
             scrollToBottom
             alwaysShowSend
@@ -338,24 +487,39 @@ export default function ChatScreen({ route }) {
             renderDay={renderDay}
           />
         )}
-
       </View>
 
       {isBlockModalVisible && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Chat Options</Text>
+
             {blockedByMe ? (
-              <TouchableOpacity style={styles.modalBtn} onPress={() => { handleUnblock(); setIsBlockModalVisible(false); }}>
+              <TouchableOpacity
+                style={styles.modalBtn}
+                onPress={() => {
+                  handleUnblock();
+                  setIsBlockModalVisible(false);
+                }}
+              >
                 <Text style={styles.modalBtnText}>Unblock {friend?.name}</Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={styles.modalBtn} onPress={() => { handleBlock(); setIsBlockModalVisible(false); }}>
+              <TouchableOpacity
+                style={styles.modalBtn}
+                onPress={() => {
+                  handleBlock();
+                  setIsBlockModalVisible(false);
+                }}
+              >
                 <Text style={styles.modalBtnText}>Block {friend?.name}</Text>
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity style={styles.modalBtn} onPress={() => navigation.navigate('ProfileData', { userId: friend?.id })}>
+            <TouchableOpacity
+              style={styles.modalBtn}
+              onPress={() => navigation.navigate('ProfileData', { userId: friend?.id })}
+            >
               <Text style={styles.modalBtnText}>Profile</Text>
             </TouchableOpacity>
 
@@ -365,6 +529,7 @@ export default function ChatScreen({ route }) {
           </View>
         </View>
       )}
+
     </Container>
   );
 }

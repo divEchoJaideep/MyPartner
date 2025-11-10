@@ -22,8 +22,7 @@ function OtpForgotPasswordScreen({ navigation, route }) {
     password_confirmation: ''
   });
 
-  // countdown states
-  const [secondsLeft, setSecondsLeft] = useState(120); // 2 minutes = 120 sec
+  const [secondsLeft, setSecondsLeft] = useState(120); 
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -43,8 +42,6 @@ function OtpForgotPasswordScreen({ navigation, route }) {
 
   const handlePasswordChange = async () => {
     const response = await resetPassword(data);
-    console.log('response :', response);
-
     if (response.success) {
       Toast.show({
         type: 'success',
@@ -67,8 +64,6 @@ function OtpForgotPasswordScreen({ navigation, route }) {
     const resenddata = { send_code_by: send_code_by, email_or_phone: email_or_phone }
 
     const response = await forgotPassword(resenddata);
-    console.log('response :', response);
-
     if (response?.result) {
       Toast.show({
         // swipeable: true,

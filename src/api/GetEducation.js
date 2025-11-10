@@ -1,7 +1,6 @@
 import {getEducation} from './const';
 
 async function GetEducation(props) {
-  console.log('getbasic info props:', props);
   var myHeaders = new Headers();
   myHeaders.append('Authorization', `Bearer ${props.token}`);
   var requestOptions = {

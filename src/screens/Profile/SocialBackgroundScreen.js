@@ -60,7 +60,6 @@ const SocialBackground = () => {
         dispatch(getSubCasteByCaste(religionData.member_caste_id, token));
       }
     } catch (err) {
-      console.log('Error fetching user details: ', err);
     }
   };
 

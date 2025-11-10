@@ -1,7 +1,6 @@
 import {caste} from './const';
 
 async function GetCaste(props) {
-  console.log('props:', props);
   var myHeaders = new Headers();
   myHeaders.append('Authorization', `Bearer ${props.token}`);
   var requestOptions = {
@@ -13,7 +12,6 @@ async function GetCaste(props) {
   return fetch(`${caste}/${props.casteID}`, requestOptions)
     .then(response => response.json())
     .then(result => {
-      console.log('result :', result);
       return result;
     })
     .catch(error => {

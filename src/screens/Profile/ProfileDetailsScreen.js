@@ -13,7 +13,7 @@ import Loading from '../../components/Loading';
 import ProfilePhoto from '../../components/ProfilePhoto';
 import StatusModal from '../../components/StatusModal/StatusModal';
 import { Images } from '../../theme';
-import { log } from 'console';
+import CommanText from '../../components/CommanText';
 
 const genderOptions = [
   { id: 1, name: 'Male' },
@@ -40,17 +40,10 @@ const ProfileDetailsScreen = () => {
 
 
   const userBasicInfo = useSelector(state => state.userDetails.userBasicInfo);
-console.log('userBasicInfo :',userBasicInfo);
-
   const loading = useSelector(state => state.userDetails.loading);
   const success = useSelector(state => state.userDetails.success);
   const { onbehalf_list, maritial_status } = useSelector(state => state.preList);
   const token = useSelector(state => state.auth.token);
-
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState("success");
-  const [modalMessage, setModalMessage] = useState("");
-  const [nextScreen, setNextScreen] = useState(null);
   const [data, setData] = useState({
     first_name: '',
     searching_for: '',
@@ -63,7 +56,6 @@ console.log('userBasicInfo :',userBasicInfo);
     photo: '',
   });
 
-console.log('Photo value before submit:', data.photo);
 
   useEffect(() => {
     if (userBasicInfo) {
@@ -75,7 +67,7 @@ console.log('Photo value before submit:', data.photo);
         birth_year: userBasicInfo.birth_year || '',
         marital_status: userBasicInfo.marital_status || '',
         phone: userBasicInfo.phone,
-    photo: typeof data.photo === 'object' && data.photo?.uri ? data.photo : userBasicInfo.photo || '', 
+        photo: typeof data.photo === 'object' && data.photo?.uri ? data.photo : userBasicInfo.photo || '',
         interested_in: intrestedOption.find(item => item.id === userBasicInfo.interested_in) || '',
       });
     }
@@ -93,29 +85,29 @@ console.log('Photo value before submit:', data.photo);
     setData(prev => ({ ...prev, [key]: value }));
   };
 
- const preparePayload = () => {
-  const formData = new FormData();
+  const preparePayload = () => {
+    const formData = new FormData();
 
-  formData.append('first_name', data.first_name);
-  formData.append('searching_for', data.searching_for?.id || data.searching_for);
-  formData.append('gender', data.gender?.id || data.gender);
-  formData.append('interested_in', data.interested_in?.id || data.interested_in);
-  formData.append('on_behalf', data.on_behalf?.id || data.on_behalf);
-  formData.append('birth_year', data.birth_year);
-  formData.append('marital_status', data.marital_status?.id || data.marital_status);
-  formData.append('phone', data.phone);
+    formData.append('first_name', data.first_name);
+    formData.append('searching_for', data.searching_for?.id || data.searching_for);
+    formData.append('gender', data.gender?.id || data.gender);
+    formData.append('interested_in', data.interested_in?.id || data.interested_in);
+    formData.append('on_behalf', data.on_behalf?.id || data.on_behalf);
+    formData.append('birth_year', data.birth_year);
+    formData.append('marital_status', data.marital_status?.id || data.marital_status);
+    formData.append('phone', data.phone);
 
-  if (typeof data.photo === 'object' && data.photo.uri) {
-    formData.append('photo', {
-      uri: data.photo.uri,
-      name: data.photo.name || 'profile.jpg',
-      type: data.photo.type || 'image/jpeg',
-    });
-  }
+    if (typeof data.photo === 'object' && data.photo.uri) {
+      formData.append('photo', {
+        uri: data.photo.uri,
+        name: data.photo.name || 'profile.jpg',
+        type: data.photo.type || 'image/jpeg',
+      });
+    }
 
-  return formData;
+    return formData;
 
-};
+  };
 
   const saveData = async () => {
     try {
@@ -124,7 +116,6 @@ console.log('Photo value before submit:', data.photo);
         navigation.navigate("Dashboard", { screen: "Profile" });
       }
     } catch (error) {
-      console.log("Save failed: ", error.message);
     }
   };
 
@@ -135,7 +126,6 @@ console.log('Photo value before submit:', data.photo);
         navigation.navigate('AddPhoto');
       }
     } catch (error) {
-      console.log("Save failed: ", error.message);
     }
   };
 
@@ -166,7 +156,13 @@ console.log('Photo value before submit:', data.photo);
 
           {/* <Error error="" /> */}
 
-          <TextInputScreen
+           <View style={styles.inputViewWrapper}>
+            <CommanText
+              commanText={'Name'}
+              commanTextstyle={[styles.textStyle,]}
+            />
+            <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',width:'100%'}} >
+            <TextInputScreen
             defaultInput
             value={data.first_name}
             onChangeText={text => handleTextChange('first_name', text)}
@@ -174,15 +170,31 @@ console.log('Photo value before submit:', data.photo);
             type="default"
             inputStyle={styles.inputStyle}
           />
-
-          <TextInputScreen
-            defaultInput
-            readOnly
-            value={data.phone}
-            placeholder="Phone"
-            type="default"
-            inputStyle={styles.inputStyle}
-          />
+            </View>
+            
+          </View>
+          <View style={styles.inputViewWrapper}>
+            <CommanText
+              commanText={'Phone'}
+              commanTextstyle={[styles.textStyle,]}
+            />
+            <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',width:'100%'}} >
+            <TextInputScreen
+              defaultInput
+              readOnly
+              value={data.phone}
+              placeholder="Phone"
+              type="default"
+              inputStyle={[styles.inputStyle,{width:'80%'}]}
+              onChangeText={text => handleTextChange('phone', text)}
+            />
+            <CommanText
+              commanText={'Read Only'}
+              commanTextstyle={[styles.textStyle,]}
+            />
+            </View>
+            
+          </View>
 
           <SelectDropdown
             data={onbehalf_list ?? []}
@@ -208,7 +220,7 @@ console.log('Photo value before submit:', data.photo);
             data={maritial_status ?? []}
             label="Marital Status"
             value={data.marital_status}
-            search
+            // search
             labelField="name"
             valueField="id"
             placeholder="Your relationship status"

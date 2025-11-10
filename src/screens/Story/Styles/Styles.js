@@ -1,4 +1,5 @@
 import { Dimensions, StyleSheet, Text, View } from 'react-native'
+import { Colors } from '../../../theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -34,6 +35,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     marginHorizontal:2,
+  },
+  cardBTN:{
+    justifyContent:'center',
+    alignItems:'center',
+    marginTop:30,
+    backgroundColor:Colors.pink
   },
   avatar: {
     width: 56,

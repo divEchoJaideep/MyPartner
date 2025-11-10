@@ -47,9 +47,7 @@ function SplashScreen() {
 
   const getProfile = async () => {
     const token = await AsyncStorage.getItem('UserToken');
-    // console.log("Splash screen token: ", token)
     const response = await commonrequest("GET", profiledropdownUrl, "", token,)
-     console.log("getProfile response?.data: ", response)
     dispatch(setPreDefineState(response?.data))
   };
 
@@ -88,7 +86,6 @@ function SplashScreen() {
         //dispatch(navigateToLogout());
       }
     } catch (error) {
-      // console.error('Error reading user data from AsyncStorage:', error);
     }
   };
 

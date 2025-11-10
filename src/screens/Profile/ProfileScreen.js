@@ -99,17 +99,27 @@ function ProfileScreen({ navigation }) {
             <Text style={styles.userNameText}>
               {userBasicInfo?.first_name
                 ? userBasicInfo?.first_name
-                : "Example"}
+                : "User"}
             </Text>
             <Text style={styles.userEmailText}>
-              {userBasicInfo?.phone ? userBasicInfo?.phone : "+91-0123456789"}
+              {userBasicInfo?.phone ? `+91-${userBasicInfo?.phone}` : "+91-0123456789"}
             </Text>
             </View>
+            <View style={styles.userEditImageContent}>
+            <TouchableOpacity onPress={() => navigation.navigate("UserPRofileShow")} style={styles.userShowProfile}>
               <Image
+                source={Images.OpenEye}
+                resizeMode="contain"
+                style={styles.userEditImage}
+                tintColor={'#fff'}
+              />
+              </TouchableOpacity>
+              {/* <Image
                 source={Images.EditIcon}
                 resizeMode="contain"
                 style={styles.userEditImage}
-              />
+              /> */}
+              </View>
           </View>
         </TouchableOpacity>
               <Content hasHeader contentContainerStyle={styles.container}>

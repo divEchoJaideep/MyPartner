@@ -173,7 +173,7 @@ const styles = EStyleSheet.create({
   inputStyle: {
     marginTop: '10rem',
     // height: '50rem',
-    // width: '155rem',
+    width: '100%',
   },
   hobbiesView: {
     flexDirection: 'row',
@@ -402,6 +402,40 @@ const styles = EStyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
   },
+  userEditImageContent:{
+    flexDirection:'row',
+    gap:10,
+    // alignItems:'center',
+    // justifyContent:'flex-end'
+  },
+  userShowProfile:{
+    backgroundColor:'#aaa',
+    borderRadius:50,
+    minWidth:40,
+    justifyContent:'center',
+    alignItems:'center',
+    marginRight:-15
+  },
+  inputViewWrap:{
+    flexDirection:'row',
+    alignItems:'center',
+    gap:10
+  },
+  inputViewBox:{ 
+    flex: 1,
+     flexDirection: 'row',
+      alignItems: 'center',
+      width:'30%',
+      justifyContent:'space-between'
+     },
+     inputViewWrapper:{
+      alignItems:'flex-start',
+      width:'100%',
+      // backgroundColor:"red"
+     },
+     textStyle:{
+          
+     },
 });
 
 export default styles;

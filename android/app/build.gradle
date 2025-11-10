@@ -106,6 +106,16 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            if (output.outputFileName != null && output.outputFileName.endsWith(".apk")) {
+                def version = defaultConfig.versionName
+                def date = new Date().format("yyyyMMdd")
+                def newName = "MyPartner--${date}.apk"
+                output.outputFileName = newName
+            }
+        }
+    }
 }
 
 dependencies {

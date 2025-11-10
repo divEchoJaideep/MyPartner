@@ -11,10 +11,9 @@ import {
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
-import { Images } from '../../theme';
+import { Colors, Images } from '../../theme';
 import styles from './Styles/styles';
 import { useSelector } from 'react-redux';
-import ImagesUpload from '../../api/imagesUpload';
 import PostStatusUpload from '../../api/PostStatusUpload';
 import GetMyStatus from '../../api/GetMyStatus';
 import { useFocusEffect } from '@react-navigation/native';
@@ -25,10 +24,11 @@ const MyStoryUpload = ({ source = [], onChange }) => {
     const token = useSelector(state => state.auth.token);
 
     const [mediaList, setMediaList] = React.useState([]);
-    const [uploadedMedia, setUploadedMedia] = React.useState([]);
     const [storyList, setStoryList] = React.useState([]);
+    const [currentIndex, setCurrentIndex] = React.useState(0);
     const [loading, setLoading] = React.useState(false);
 
+    // ✅ Pick image/video (NO upload here)
     const pickMedia = async () => {
         try {
             const totalUsed = storyList.length + mediaList.length;
@@ -48,54 +48,23 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                 multiple: true,
             });
 
-            if (files.length > remainingSlots) {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Limit Exceeded',
-                    text2: `You can only add ${remainingSlots} more item(s).`,
-                });
-            }
+            const limitedFiles = files.slice(0, remainingSlots);
 
-            const newItems = files.slice(0, remainingSlots);
-            const updatedList = [...mediaList, ...newItems];
-            setMediaList(updatedList);
-
-            const formattedItems = newItems.map(file => ({
+            const formattedItems = limitedFiles.map(file => ({
                 uri: file.path,
                 name: file.filename || 'story_upload',
                 type: file.mime,
                 caption: '',
             }));
 
-            // Start Loading while uploading
-            setLoading(true);
-
-            const uploadedPaths = [];
-
-            for (let item of formattedItems) {
-                const result = await ImagesUpload({
-                    token,
-                    uploadImage: {
-                        uri: item.uri,
-                        name: item.name,
-                        type: item.type,
-                    },
-                });
-
-                if (result?.data?.path) {
-                    uploadedPaths.push(result.data.path);
-                }
-            }
-
-            setUploadedMedia(prev => [...prev, ...uploadedPaths]);
-            onChange?.(formattedItems);
+            setMediaList(prev => [...prev, ...formattedItems]);
+            onChange?.([...mediaList, ...formattedItems]);
         } catch (error) {
-            // console.log('Media picking/upload error:', error);
-        } finally {
-            setLoading(false);
+            console.log('❌ pickMedia error:', error);
         }
     };
 
+    // ✅ Upload/post selected files
     const handlePostStatus = async () => {
         try {
             if (mediaList.length === 0) {
@@ -106,9 +75,9 @@ const MyStoryUpload = ({ source = [], onChange }) => {
             setLoading(true);
 
             const formattedMedia = mediaList.map((file, index) => ({
-                uri: file.path,
+                uri: file.uri,
                 name: file.filename || `story_upload_${index}`,
-                type: file.mime,
+                type: file.type,
             }));
 
             const response = await PostStatusUpload({
@@ -123,7 +92,6 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                     text2: response.message || 'Status posted successfully.',
                 });
                 setMediaList([]);
-                setUploadedMedia([]);
                 fetchStories();
             } else {
                 Toast.show({
@@ -133,7 +101,7 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                 });
             }
         } catch (error) {
-            // console.log('PostStatusUpload error:', error);
+            console.log('❌ handlePostStatus error:', error);
         } finally {
             setLoading(false);
         }
@@ -141,22 +109,12 @@ const MyStoryUpload = ({ source = [], onChange }) => {
 
     const removeMedia = index => {
         const updatedList = mediaList.filter((_, i) => i !== index);
-        const updatedUploads = uploadedMedia.filter((_, i) => i !== index);
         setMediaList(updatedList);
-        setUploadedMedia(updatedUploads);
-        onChange?.(
-            updatedList.map(file => ({
-                uri: file.path,
-                name: file.filename || 'story_upload',
-                type: file.mime,
-                caption: '',
-            }))
-        );
+        onChange?.(updatedList);
     };
 
     const removeAllMedia = () => {
         setMediaList([]);
-        setUploadedMedia([]);
         onChange?.([]);
     };
 
@@ -200,7 +158,7 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                             });
                         }
                     } catch (error) {
-                        // console.log('DeleteMyStatus failed:', error);
+                        console.log('❌ DeleteMyStatus error:', error);
                     } finally {
                         setLoading(false);
                     }
@@ -214,14 +172,13 @@ const MyStoryUpload = ({ source = [], onChange }) => {
         ...mediaList.map((item, index) => ({
             ...item,
             id: `media_${index}`,
-            path: item.path,
-            mime: item.mime,
+            path: item.uri,
             type: 'selected',
         })),
     ];
 
     const renderItem = ({ item, index }) => {
-        const isVideo = item.mime?.startsWith?.('video');
+        const isVideo = item.type?.startsWith?.('video');
 
         return (
             <View style={{ marginRight: 10 }}>
@@ -252,18 +209,7 @@ const MyStoryUpload = ({ source = [], onChange }) => {
     return (
         <View style={styles.fullScreenContainer}>
             {loading && (
-                <View
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        backgroundColor: 'rgba(0,0,0,0.3)',
-                        zIndex: 10,
-                    }}>
+                <View style={styles.loadingOverlay}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={{ color: '#fff', marginTop: 10 }}>Please wait...</Text>
                 </View>
@@ -281,9 +227,7 @@ const MyStoryUpload = ({ source = [], onChange }) => {
             )}
 
             <View style={styles.totalWrap}>
-                <Text style={styles.totalText}>
-                    Total Status : {combinedList.length}
-                </Text>
+                <Text style={styles.totalText}>Total Status : {combinedList.length}</Text>
                 {mediaList.length > 0 && (
                     <TouchableOpacity
                         onPress={handlePostStatus}
@@ -302,8 +246,38 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                     renderItem={renderItem}
                     style={{ marginTop: 20, marginLeft: 20 }}
                     showsHorizontalScrollIndicator={false}
+                    pagingEnabled
+                    onMomentumScrollEnd={e => {
+                        const index = Math.round(
+                            e.nativeEvent.contentOffset.x / Dimensions.get('window').width
+                        );
+                        setCurrentIndex(index);
+                    }}
+                    getItemLayout={(data, index) => ({
+                        length: Dimensions.get('window').width,
+                        offset: Dimensions.get('window').width * index,
+                        index,
+                    })}
                 />
+
             )}
+
+            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
+                {combinedList.map((_, index) => (
+                    <View
+                        key={index}
+                        style={{
+                            width: currentIndex === index ? 20 : 8,
+                            height: 8,
+                            borderRadius: 4,
+                            marginHorizontal: 4,
+                            marginBottom:30,
+                            backgroundColor: currentIndex === index ?  Colors.pink : 'gray',
+                        }}
+                    />
+                ))}
+            </View>
+
         </View>
     );
 };

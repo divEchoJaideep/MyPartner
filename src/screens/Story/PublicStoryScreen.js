@@ -24,7 +24,7 @@ const PublicStoryScreen = () => {
   const token = useSelector(state => state.auth.token);
   const [storyList, setStoryList] = useState([]);
   const [loading, setLoading] = useState(true);
-  console.log('storyList :', storyList);
+  const [myStory, setMyStory] = useState(null); // 👈 separate my status
 
   useFocusEffect(
     useCallback(() => {
@@ -40,64 +40,61 @@ const PublicStoryScreen = () => {
       const myResponse = await GetMyStatus(token);
 
       let friendStories = [];
-      let myStories = [];
+      let myStories = null;
 
       if (friendResponse?.success && Array.isArray(friendResponse.data)) {
-        friendStories = friendResponse.data;
+        // Filter out empty statuses
+        friendStories = friendResponse.data.filter(
+          f => Array.isArray(f.statuses) && f.statuses.length > 0
+        );
       }
-      if (myResponse?.success && Array.isArray(myResponse.data) && myResponse.data.length > 0) {
-        myStories = [
-          {
-            id: myResponse.data[0].user_id,
-            name: 'My Status',
-            isMyStatus: true,
-            statuses: myResponse.data.map(story => ({
-              id: story.id,
-              image_url: story.image_url,
-              created_at: story.created_at,
-            })),
-          },
-        ];
-      }
-      const combinedStories = [...myStories, ...friendStories];
 
-      setStoryList(combinedStories);
+      if (
+        myResponse?.success &&
+        Array.isArray(myResponse.data) &&
+        myResponse.data.length > 0
+      ) {
+        myStories = {
+          id: myResponse.data[0].user_id,
+          name: 'My Status',
+          isMyStatus: true,
+          statuses: myResponse.data.map(story => ({
+            id: story.id,
+            image_url: story.image_url,
+            created_at: story.created_at,
+          })),
+        };
+      }
+
+      setMyStory(myStories);
+      setStoryList(friendStories);
     } catch (error) {
-      console.error('Error fetching stories:', error);
     } finally {
       setLoading(false);
     }
   };
 
-
   const renderItem = ({ item }) => {
     const firstStatus = item.statuses?.[0];
     if (!firstStatus) return null;
-    console.log('firstStatus :', firstStatus);
 
     return (
       <TouchableOpacity
-        style={[
-          styles.card,
-          // item.isMyStatus && { borderColor: '#007bff', borderWidth: 1.5 },
-        ]}
+        style={styles.card}
         onPress={() =>
           navigation.navigate('StoryViewerScreen', {
             storyList: item.statuses.map(status => ({
-                id: status.id,
+              id: status.id,
               image: status.image_url,
               time: status.created_at,
             })),
             user: { name: item.isMyStatus ? 'My Status' : item.name },
           })
-        }
-      >
+        }>
         <Image source={{ uri: firstStatus.image_url }} style={styles.avatar} />
         <View style={styles.info}>
           <View>
-            <Text style={[styles.name,
-              // item.isMyStatus && { color: '#007bff' }
-            ]}>
+            <Text style={styles.name}>
               {item.isMyStatus ? 'My Status' : item.name}
             </Text>
             <Text style={styles.time}>
@@ -109,44 +106,113 @@ const PublicStoryScreen = () => {
                 })
                 .replace('am', 'AM')
                 .replace('pm', 'PM')}
-
             </Text>
           </View>
-          {item.isMyStatus && (
-            <View>
-              <TouchableOpacity onPress={() => navigation.navigate('StoryBoard')}>
-                <Image source={Images.AddIcon} style={styles.icon} />
-              </TouchableOpacity>
-            </View>
-          )}
-
         </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <Container style={[styles.container, { paddingTop: 20,  }]}>
+    <Container style={[styles.container, { paddingTop: 20 }]}>
       <Header
         transparent
         hasBackBtn
         title="Status"
         onBackPress={() => navigation.goBack()}
       />
+
       {loading ? (
         <ActivityIndicator size="small" color="black" />
+      ) : !myStory && storyList.length === 0 ? (
+        <View>
+          <Text style={{ textAlign: 'center', marginTop: 20, color: '#aaa' }}>
+            No status found.
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('StoryBoard')}
+            style={[styles.card, styles.cardBTN]}>
+            <Text
+              style={{
+                textAlign: 'center',
+                marginTop: 0,
+                marginRight: 20,
+                color: '#fff',
+              }}>
+              Add Status
+            </Text>
+            <Image
+              source={Images.AddIcon}
+              style={styles.icon}
+              tintColor={'#fff'}
+            />
+          </TouchableOpacity>
+        </View>
       ) : (
         <FlatList
+          ListHeaderComponent={
+            <>
+              {/* 🧍 My Status Section */}
+              {myStory && (
+                <TouchableOpacity
+                  style={styles.card}
+                  onPress={() =>
+                    navigation.navigate('StoryViewerScreen', {
+                      storyList: myStory.statuses.map(status => ({
+                        id: status.id,
+                        image: status.image_url,
+                        time: status.created_at,
+                      })),
+                      user: { name: 'My Status' },
+                    })
+                  }>
+                  <Image
+                    source={{ uri: myStory.statuses?.[0]?.image_url }}
+                    style={styles.avatar}
+                  />
+                  <View style={styles.info}>
+                    <View>
+                      <Text style={styles.name}>My Status</Text>
+                      <Text style={styles.time}>
+                        {new Date(
+                          myStory.statuses?.[0]?.created_at
+                        ).toLocaleTimeString([], {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true,
+                        })}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate('StoryBoard')}>
+                      <Image source={Images.AddIcon} style={styles.icon} />
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              )}
+
+              {storyList.length > 0 && (
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '600',
+                    color: '#444',
+                    marginTop: 10,
+                    marginBottom: 8,
+                    marginLeft: 10,
+                  }}>
+                  Friend Stories
+                </Text>
+              )}
+            </>
+          }
           data={storyList}
-          keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+          keyExtractor={(item, index) =>
+            item.id?.toString() || index.toString()
+          }
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <Text style={{ textAlign: 'center', marginTop: 20, color: '#aaa' }}>
-              No status found.
-            </Text>
-          }
         />
       )}
     </Container>

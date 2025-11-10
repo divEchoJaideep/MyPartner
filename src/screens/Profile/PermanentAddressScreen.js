@@ -36,7 +36,6 @@ const PermanentAddress = props => {
   const getPermanentAddress = async () => {
     setLoading(true);
     const response = await GetPermanentAddress({token: props.token});
-    console.log('get permanent address api : ', response.data);
     if (response && response.data) {
       setData(response.data);
     } else {
@@ -47,7 +46,6 @@ const PermanentAddress = props => {
   };
 
   const handleTextChange = (key, value) => {
-    console.log('key', key, value);
     setData(prevData => ({
       ...prevData,
       [key]: value,
@@ -55,12 +53,10 @@ const PermanentAddress = props => {
   };
 
   const onStateChange = async stateID => {
-    // console.log('onStateChange: ', onStateChange);
     const response = await GetCities({
       stateID: stateID,
       token: props?.token,
     });
-    // console.log('response city:', response);
 
     if (response.data) {
       setCityList(response.data);

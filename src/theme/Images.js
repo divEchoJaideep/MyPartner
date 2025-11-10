@@ -81,8 +81,10 @@ const Like = require('../assets/images/heart.png');
 const UnLike = require('../assets/images/heartACT.png');
 const Follow = require('../assets/images/add-user.png');
 const UnFollow = require('../assets/images/unfolow.png');
+const ViewProfile = require('../assets/images/eyeView.png');
 
 export {
+  ViewProfile,
   Besafe,
   Lock,
   More,

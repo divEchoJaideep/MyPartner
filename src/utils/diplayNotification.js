@@ -1,6 +1,8 @@
 import notifee, { AndroidImportance } from '@notifee/react-native';
 
 export const displayNotification = async (titleKey, body) => {
+  console.log('titleKey :',titleKey);
+  
   const channelId = 'default';
 
   // recreate channel to be sure
@@ -22,7 +24,6 @@ export const displayNotification = async (titleKey, body) => {
   const displayTitle = titleMapping[titleKey] || titleKey;
 
   if (!displayTitle || !body) {
-    console.log('Notification skipped, title or body missing');
     return;
   }
 
@@ -36,5 +37,4 @@ export const displayNotification = async (titleKey, body) => {
     data: { type: titleKey, displayTitle },
   });
 
-  console.log('Notification displayed:', displayTitle, body);
 };

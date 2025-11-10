@@ -41,6 +41,7 @@ const HomeScreenTwo = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [dashboardData, setDashboardData] = useState([]);
   const [loading, setLoading] = useState(false);
+console.log('dashboardData :',dashboardData);
 
   const navigation = useNavigation();
   useFocusEffect(
@@ -49,8 +50,7 @@ const HomeScreenTwo = () => {
         getUserDashboard(1);
         getProfile()
       }
-      return () => {
-      };
+      
     }, [token,])
   )
   useEffect(() => {
@@ -140,7 +140,6 @@ const HomeScreenTwo = () => {
   const handleFavRequest = async (userId) => {
     try {
       const response = await PostFavRequest({ token, userId });
-      console.log('response Like :',response);
       if (response && response.success) {
         updateStatus(userId, 'shortlist_status');
         Toast.show({

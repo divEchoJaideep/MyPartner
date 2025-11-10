@@ -69,7 +69,10 @@ export default StyleSheet.create({
     fontSize: 16,
     color: Colors.black,
     marginBottom: 6,
-    // textAlign:'left',
+    textAlign:'left',
+  },
+  infoTextAlign:{
+textAlign:'right'
   },
   card:{
     flexDirection:'row',

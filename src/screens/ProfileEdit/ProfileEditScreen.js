@@ -26,7 +26,6 @@ function ProfileEditScreen({navigation}) {
             });
           }
         } catch (error) {
-          console.log("Error loading stored user:", error);
         }
       };
 

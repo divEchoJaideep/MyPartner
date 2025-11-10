@@ -46,9 +46,6 @@ import { useCallback } from 'react';
 
 const useCheckProfile = () => {
   const checkProfile = useCallback(() => {
-    // 🔹 No need to call any API here
-    // 🔹 Global Unauthenticated handling is already in commonrequest
-    console.log('Global authentication check handled by commonrequest.');
   }, []);
 
   return checkProfile;

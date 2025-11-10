@@ -698,11 +698,11 @@ const profileInputList = [
     text: 'Personality',
     pageName: 'Physical',
   },
-  {
-    id: 7,
-    text: 'Language',
-    pageName: 'Language',
-  },
+  // {
+  //   id: 7,
+  //   text: 'Language',
+  //   pageName: 'Language',
+  // },
   {
     id: 10,
     text: 'Religious & Cultural Identity',

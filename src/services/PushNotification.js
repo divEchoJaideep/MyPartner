@@ -70,6 +70,7 @@ export const topicSubscribe = async (topic = "notifications") => {
     messaging()
         .subscribeToTopic(topic)
         .then(() => 
-          console.log(`Subscribed to topic: ${topic}`)
+          // console.log(`Subscribed to topic: ${topic}`)
+        {}
       );
 } 

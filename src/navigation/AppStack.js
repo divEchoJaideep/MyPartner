@@ -41,6 +41,7 @@ import Test from '../screens/Test/Test';
 import Walletscreen from '../screens/Wallet/Walletscreen';
 import PrivacyPolicy from '../screens/TermsofService/PrivacyPolicy';
 import BeSafe from '../screens/TermsofService/BeSafe';
+import UserPRofileShow from '../screens/Home/UserPRofileShow';
 
 const Stack = createNativeStackNavigator();
 
@@ -82,6 +83,7 @@ const AppStack = () => {
       <Stack.Screen name="Wallet" component={Walletscreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
       <Stack.Screen name="BeSafe" component={BeSafe} />
+      <Stack.Screen name="UserPRofileShow" component={UserPRofileShow} />
     </Stack.Navigator>
   );
 };

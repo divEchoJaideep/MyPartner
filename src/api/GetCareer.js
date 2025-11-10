@@ -1,7 +1,6 @@
 import {getCareer} from './const';
 
 async function GetCareer(props) {
-  console.log('getbasic info props:', props);
   var myHeaders = new Headers();
   myHeaders.append('Authorization', `Bearer ${props.token}`);
   var requestOptions = {

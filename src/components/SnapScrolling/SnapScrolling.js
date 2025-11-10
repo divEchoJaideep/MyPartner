@@ -15,14 +15,22 @@ import { useNavigation } from '@react-navigation/native';
 import { isIphoneX } from '../../libs/Utils';
 import CommanText from '../CommanText';
 import { Colors, Images } from '../../theme';
+import Container from '../Container';
 
 const { height, width } = Dimensions.get('window');
+console.log('height :', height);
 
 const ITEM_HEIGHT =
   height <= 740 ? height - 22 :
-  height <= 820 ? height - 90 :
-  height <= 900 ? height - 30 :
-  height - 50;
+    height <= 820 ? height - 90 :
+      height <= 900 ? height + 10 :
+        height - 50;
+
+ const FULLHEIGHT =
+ height <= 740 ? height * 1.04 :
+    height <= 820 ? height * 0.94 :
+      height <= 900 ? height * 1.04:
+        height ;      
 
 const BOTTOM_PADDING = isIphoneX() ? 100 : Platform.OS === 'ios' ? 70 : 20;
 
@@ -37,10 +45,11 @@ const SnapScrolling = ({
   handleFavRequest,
   handleCancelRequest,
   handleCancelFavRequest,
+  fullHeight = false,
 }) => {
   const navigation = useNavigation();
+  console.log('data :', data);
 
-  /** Footer Loader when fetching more data */
   const renderFooter = () => {
     if (!loadingMore) return null;
     return (
@@ -57,13 +66,17 @@ const SnapScrolling = ({
     <ImageBackground
       source={{ uri: item.photo }}
       resizeMode="cover"
-      style={[styles.videoContainer, { height: ITEM_HEIGHT }]}
+      style={[
+        styles.videoContainer,
+        { height: fullHeight ? FULLHEIGHT : ITEM_HEIGHT },
+      ]}
     >
       <TouchableOpacity
         onPress={() =>
           navigation.navigate('ProfileData', {
             userId: item?.user_id,
             userProfileData: item,
+            document : item?.documents
           })
         }
         style={styles.itemWrap}
@@ -96,7 +109,7 @@ const SnapScrolling = ({
           <View>
             <View style={styles.row}>
               <CommanText
-                commanText={item.name}
+                commanText={item.name || item.first_name}
                 commanTextstyle={styles.textStyle}
               />
 
@@ -131,7 +144,6 @@ const SnapScrolling = ({
 
           {/* Action Buttons */}
           <View style={styles.buttonWrap}>
-            {/* Request / Remove */}
             <TouchableOpacity
               style={[styles.button, styles.requestButton]}
               onPress={() =>
@@ -148,7 +160,6 @@ const SnapScrolling = ({
               />
             </TouchableOpacity>
 
-            {/* Fav / Undo */}
             <TouchableOpacity
               style={[styles.button, styles.favButton]}
               onPress={() =>
@@ -177,27 +188,26 @@ const SnapScrolling = ({
   }
 
   return (
-    <FlatList
-      data={data}
-      keyExtractor={(item) => item.user_id.toString()}
-      renderItem={renderItem}
-      pagingEnabled
-      snapToInterval={ITEM_HEIGHT}
-      decelerationRate="fast"
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          tintColor={Colors.primary}
-        />
-      }
-      onEndReached={loadMore}
-      onEndReachedThreshold={0.2}
-      ListFooterComponent={renderFooter}
-      snapToAlignment="start"
-      bounces={false}
-    />
+      <FlatList
+        data={data}
+        renderItem={renderItem}
+        pagingEnabled
+        snapToInterval={fullHeight ? height : ITEM_HEIGHT}
+        decelerationRate="fast"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={Colors.primary}
+          />
+        }
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.2}
+        ListFooterComponent={renderFooter}
+        snapToAlignment="start"
+        bounces={false}
+      />
   );
 };
 

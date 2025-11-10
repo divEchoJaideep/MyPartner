@@ -26,8 +26,8 @@ function ChatScreen({ navigation }) {
   const [loading, setLoading] = React.useState(true);
   const [chats, setChats] = React.useState([]);
   const [userPhotos, setUserPhotos] = React.useState({});
-  console.log('chats :',chats);
-  
+  console.log('chats :', chats);
+
   const db = getFirestore();
 
   // Fetch all chat documents and filter by user ID
@@ -128,37 +128,64 @@ function ChatScreen({ navigation }) {
   );
 
   const renderItem = ({ item }) => {
-    const currentUserId = String(userBasicInfo?.user_id);
+  const currentUserId = Number(userBasicInfo?.user_id);
 
-    // Friend (other participant)
-    const friendData = item.participants?.find(p => String(p.id) !== currentUserId);
-    const liveUser = friendData?.id ? userPhotos[friendData.id] : null;
-    const unreadCount = item?.unreadCounts?.[currentUserId] || 0;
+  const friendData = item.participants?.find(p => Number(p.id) !== currentUserId);
+  const liveUser = friendData?.id ? userPhotos[friendData.id] : null;
+  const unreadCount = item?.unreadCounts?.[currentUserId] || 0;
+console.log('unreadCount :',unreadCount);
 
-    const displayName =
-      liveUser?.name ||
-      (friendData?.name
-        ? friendData.name.charAt(0).toUpperCase() + friendData.name.slice(1)
-        : 'Unknown');
+  const displayName =
+    liveUser?.name ||
+    (friendData?.name
+      ? friendData.name.charAt(0).toUpperCase() + friendData.name.slice(1)
+      : 'Unknown');
 
-    const displayPhoto =
-      liveUser?.photo || friendData?.photo || Images.UserImage;
+  const displayPhoto =
+    liveUser?.photo || friendData?.photo || Images.UserImage;
 
-    let lastMsgTime = '';
-    if (item.updatedAt?._seconds) {
-      const date = new Date(item.updatedAt._seconds * 1000);
-      let hours = date.getHours();
-      const minutes = date.getMinutes();
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12;
-      const minutesStr = minutes < 10 ? `0${minutes}` : minutes;
-      lastMsgTime = `${hours}:${minutesStr} ${ampm}`;
-    }
+  // Format last message time
+  let lastMsgTime = '';
+  if (item.updatedAt?._seconds) {
+    const date = new Date(item.updatedAt._seconds * 1000);
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    const minutesStr = minutes < 10 ? `0${minutes}` : minutes;
+    lastMsgTime = `${hours}:${minutesStr} ${ampm}`;
+  }
 
-    return (
-      <TouchableOpacity
-        style={[styles.chatListLink, { justifyContent: 'space-between', width: '100%' }]}
-        onPress={() =>
+  // -------------------------------
+  // BLOCK LOGIC USING blockedBy ARRAY
+  // -------------------------------
+  const blockedByArray = Array.isArray(item.blockedBy) ? item.blockedBy.map(Number) : [];
+  const friendId = friendData?.id ? Number(friendData.id) : null;
+
+  let blockedMessage = '';
+  let disableChat = false;
+
+  if (blockedByArray.includes(currentUserId)) {
+    // Current user is blocked
+    blockedMessage = 'Blocked by you';
+    disableChat = true;
+  } else if (friendId && blockedByArray.includes(friendId)) {
+    // Friend is blocked by current user
+    blockedMessage = '🚫 You are blocked';
+    disableChat = true;
+  }
+
+  return (
+    <TouchableOpacity
+      style={[
+        styles.chatListLink,
+        {
+          justifyContent: 'space-between',
+          width: '100%',
+          // opacity: disableChat ? 0.6 : 1,
+        },
+      ]}
+     onPress={() =>
           navigation.navigate('chatDetails', {
             friend: {
               id: friendData?.id,
@@ -169,55 +196,59 @@ function ChatScreen({ navigation }) {
             conversationId: item?.key,
           })
         }
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Image
-            source={
-              displayPhoto && typeof displayPhoto === 'string'
-                ? { uri: `${displayPhoto}?v=${friendData?.id}` }
-                : Images.UserImage
-            }
-            resizeMode="cover"
-            style={styles.chatListUserImg}
-          />
-          <View style={styles.chatListLinkText}>
-            <Text style={styles.chatListLinkNameText}>{displayName}</Text>
-            <Text
-              style={[
-                styles.chatListLinkLastSeenText,
-                { fontWeight: unreadCount > 0 ? 'bold' : 'normal' },
-              ]}
-              numberOfLines={1}
-            >
-              {item.lastMessage || 'No messages yet'}
-            </Text>
-          </View>
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Image
+          source={
+            displayPhoto && typeof displayPhoto === 'string'
+              ? { uri: `${displayPhoto}?v=${friendData?.id}` }
+              : Images.UserImage
+          }
+          resizeMode="cover"
+          style={styles.chatListUserImg}
+        />
+        <View style={styles.chatListLinkText}>
+          <Text style={styles.chatListLinkNameText}>{displayName}</Text>
+          <Text
+            style={[
+              styles.chatListLinkLastSeenText,
+              {
+                fontWeight: unreadCount > 0 ? 'bold' : 'normal',
+                color: disableChat ? 'red' : '#999',
+                fontStyle: disableChat ? 'italic' : 'normal',
+              },
+            ]}
+            numberOfLines={1}
+          >
+            {disableChat ? blockedMessage : item.lastMessage || 'No messages yet'}
+          </Text>
         </View>
+      </View>
 
-        {unreadCount > 0 && (
-          <View style={[styles.unreadDot, { position: 'absolute', right: 20, top: 20 }]}>
-            <Text style={styles.unreadDotText}>{unreadCount}</Text>
-          </View>
-        )}
+      {!disableChat && unreadCount > 0 && (
+        <View style={[styles.unreadDot, { position: 'absolute', right: 20, top: 20 }]}>
+          <Text style={styles.unreadDotText}>{unreadCount}</Text>
+        </View>
+      )}
 
-        <Text
-          style={[
-            styles.chatListLinkLastSeenText,
-            {
-              marginLeft: 5,
-              fontSize: 12,
-              color: '#999',
-              position: 'absolute',
-              bottom: 0,
-              right: 20,
-            },
-          ]}
-        >
-          {lastMsgTime}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
+      <Text
+        style={[
+          styles.chatListLinkLastSeenText,
+          {
+            marginLeft: 5,
+            fontSize: 12,
+            color: '#999',
+            position: 'absolute',
+            bottom: 0,
+            right: 20,
+          },
+        ]}
+      >
+        {lastMsgTime}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
   return (
     <Container>

@@ -14,8 +14,6 @@ export default function Walletscreen() {
     const token = useSelector(state => state.auth.token);
   
     const [data , setData ] = useState([]);
-console.log('data : ', data);
-
 const referralLink = `mypartner://connect/register?ref=Chris`;
 const playStoreLink = 'https://play.google.com/store/apps/details?id=com.mypartner';
 
@@ -57,7 +55,6 @@ const handlegetShareDetails = async() => {
 
 const handlePostShareDetails = async () => {
   const result = await postShar(token);
-  console.log('result :', result)
   if(result?.success){
     handlegetShareDetails();
   }else {

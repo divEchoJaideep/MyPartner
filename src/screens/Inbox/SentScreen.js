@@ -32,17 +32,33 @@ const SentRequest = () => {
     }, [navigation, cancelRequest]),
   );
 
-  const getUserRequestSent = async () => {
-    setLoading(true);
-    const response = await GetUserRequestSent({ token: token });
-    if (response && response.data) {
-      setSentRequest(response.data);
-    } else {
-      setError(response.message);
-    }
+  // const getUserRequestSent = async () => {
+  //   setLoading(true);
+  //   const response = await GetUserRequestSent({ token: token });
+  //   console.log('response :',response)
+  //   if (response && response.data) {
+  //     setSentRequest(response.data);
+  //   } else {
+  //     setError(response.message);
+  //   }
 
-    setLoading(false);
-  };
+  //   setLoading(false);
+  // };
+  const getUserRequestSent = async () => {
+  setLoading(true);
+  const response = await GetUserRequestSent({ token: token });
+  console.log('response :', response);
+  
+  if (response && response.data) {
+    const filteredData = response.data.filter(item => item.status !== 'Approved');
+    setSentRequest(filteredData);
+  } else {
+    setError(response.message);
+  }
+
+  setLoading(false);
+};
+
 
   const handleCancelRequest = async (user_id) => {
     const data = { user_id };

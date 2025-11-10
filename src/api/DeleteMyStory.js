@@ -19,7 +19,6 @@ const DeleteMyStatus = async (id, token) => {
       return result;
     })
     .catch(error => {
-      // console.error('DeleteMyStatus error:', error);
       return { success: false, message: 'Error connecting to server' };
     });
 };

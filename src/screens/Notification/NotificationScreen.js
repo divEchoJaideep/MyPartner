@@ -15,7 +15,6 @@ function NotificationScreen({ navigation }) {
       const token = useSelector(state => state.auth.token);
 
   const [notifcation, setNotification] = React.useState({});
-console.log('notifcation :',notifcation);
 
   useFocusEffect(
     React.useCallback(() => {

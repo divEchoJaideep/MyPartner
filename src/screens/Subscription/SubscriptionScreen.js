@@ -20,6 +20,7 @@ import { Subscription } from '../../api/api';
 import { useSelector } from 'react-redux';
 import RazorpayCheckout from 'react-native-razorpay';
 import Toast from 'react-native-toast-message';
+import { initPhonePeSDK, phonePeStartTransaction } from '../../utils/phonepePayment';
 
 const { width } = Dimensions.get('window');
 
@@ -136,52 +137,41 @@ const SubscriptionScreen = () => {
 
   const RAZORPAY_TEST_KEY = 'rzp_test_ROBbgX7aCZ2Tjo';
 
-  const handleRazorpayPayment = packageItem => {
-    if (!RAZORPAY_TEST_KEY) {
-      Toast.show({
-        type: 'error',
-        text1: 'Razorpay Key missing',
-      });
-      return;
-    }
-
-    setIsPaymentOpen(true);
-
-    const options = {
-      description: 'Credits towards consultation',
-      image:
-        'https://clients.divecho.com/matrimony/public/uploads/all/obNS7BPrK6BT00OCcc236Mep0NuvDT4ieUesjQ1O.png',
-      currency: 'INR',
-      key: RAZORPAY_TEST_KEY,
-      amount: packageItem?.price * 100,
-      name: `${packageItem?.name} Package`,
-      prefill: { email: 'gaurav.kumar@example.com', contact: '9191919191', name: 'Gaurav Kumar' },
-      theme: { color: Colors.pink },
-      one_click_checkout: true,
-      show_coupons: true,
+ const handleRazorpayPayment = async (selectedProduct) => {
+  console.log('selectedProduct :',selectedProduct);
+  
+    const boostAmount = selectedProduct.price; // Assuming price is used
+    const boostExpiry = selectedProduct.validity; // Or whatever field defines expiry
+    const generateTransactionId = () => {
+        const timePart = Date.now();
+        const randomPart = Math.floor(1000 + Math.random() * 9000);
+        return `T${timePart}${randomPart}`;
     };
+    const transactionId = generateTransactionId();
+    const amount = Number(boostAmount);
+    const mobileNumber = "9999999999";
 
-    RazorpayCheckout.open(options)
-      .then(data => {
-        setIsPaymentOpen(false);
-        Toast.show({
-          type: 'success',
-          text1: 'Payment Success ',
-          text2: `Payment ID: ${data.razorpay_payment_id}`,
-          topOffset: 70,
-        });
-      })
-      .catch(error => {
-        setIsPaymentOpen(false);
-        Toast.show({
-          type: 'error',
-          text1: 'Payment Failed ',
-          text2: 'Transaction cancelled or failed. Try again!',
-          topOffset: 70,
+    console.log("🔄 Initializing PhonePe SDK...");
+    const sdkInit = await initPhonePeSDK();
 
-        });
-      });
-  };
+    const paymentResult = await phonePeStartTransaction({
+        amount,
+        mobileNumber,
+        transactionId,
+    });
+
+    if (paymentResult?.data?.status === "SUCCESS") {
+        const token = await AsyncStorage.getItem('userToken');
+        const header = `Bearer ${token}`;
+        const data = {
+            listing_id: selectedProduct.id,
+            amount: Number(boostAmount),
+            expire_date: boostExpiry,
+        };
+        // const result = await boostOrder(data, header);
+        // Handle success
+    }
+};
 
   if (loading) {
     return (

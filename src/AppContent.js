@@ -84,7 +84,6 @@ const AppContent = () => {
 
   useEffect(() => {
     const unsubscribeForeground = messaging().onMessage(async remoteMessage => {
-      console.log("Foreground remoteMessage:", remoteMessage);
 
       await displayNotification(
         remoteMessage?.notification?.title || "New Notification",
