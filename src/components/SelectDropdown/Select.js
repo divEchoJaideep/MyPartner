@@ -5,7 +5,9 @@ import CommanText from '../CommanText';
 import styles from './Styles/index';
 
 const SelectDropdown = props => {
-  const [value, setValue] = useState(props?.value || (props.MultiSelectDropdown ? [] : null));
+  const [value, setValue] = useState(
+    props?.value || (props.MultiSelectDropdown ? [] : null)
+  );
 
   useEffect(() => {
     if (props?.value !== undefined && props?.value !== null) {
@@ -14,7 +16,12 @@ const SelectDropdown = props => {
   }, [props?.value]);
 
   return (
-    <View style={styles.dropdownConteiner}>
+    <View
+      style={[
+        styles.dropdownConteiner,
+        props.disabled && { opacity: 0.5 }  // ⬅ visual disabled state
+      ]}
+    >
       {props.label && (
         <CommanText
           commanText={props.label}
@@ -24,7 +31,7 @@ const SelectDropdown = props => {
 
       {props.MultiSelectDropdown ? (
         <MultiSelect
-          style={styles.dropdown}
+          style={[styles.dropdown, props.style]}
           placeholderStyle={styles.placeholderStyle}
           selectedTextStyle={styles.selectedTextStyle}
           inputSearchStyle={styles.inputSearchStyle}
@@ -36,14 +43,21 @@ const SelectDropdown = props => {
           valueField="id"
           placeholder={props.placeholder}
           searchPlaceholder={props.searchPlaceholder}
-          value={value}              
-          onChange={item => {        
+          value={value}
+          disable={props.disabled}            // ⬅ Multi-select disable prop
+          onChange={item => {
+            if (props.disabled) return;       // ⬅ Prevent change
             setValue(item);
             props.onSelectChange && props.onSelectChange(item);
           }}
           renderItem={(item, selected) => (
             <View style={{ padding: 10 }}>
-              <Text style={{ color: selected ? 'blue' : '#000', fontSize: 16 }}>
+              <Text
+                style={{
+                  color: selected ? 'blue' : '#000',
+                  fontSize: 16,
+                }}
+              >
                 {item.name}
               </Text>
             </View>
@@ -51,7 +65,7 @@ const SelectDropdown = props => {
         />
       ) : (
         <Dropdown
-          style={styles.dropdown}
+          style={[styles.dropdown, props.style]}
           placeholderStyle={styles.placeholderStyle}
           selectedTextStyle={styles.selectedTextStyle}
           inputSearchStyle={styles.inputSearchStyle}
@@ -66,13 +80,17 @@ const SelectDropdown = props => {
           searchPlaceholder={props.searchPlaceholder}
           value={value}
           dropdownPosition={props.dropdownPosition}
+          disable={props.disabled}              // ⬅ Dropdown disable prop
           onChange={item => {
+            if (props.disabled) return;         // ⬅ Prevent change
             setValue(item.id);
             props.onSelectChange && props.onSelectChange(item.id);
           }}
           renderItem={(item, selected) => (
             <View style={{ padding: 10 }}>
-              <Text style={{ color: '#000', fontSize: 16 }}>{item.name}</Text>
+              <Text style={{ color: '#000', fontSize: 16 }}>
+                {item.name}
+              </Text>
             </View>
           )}
         />

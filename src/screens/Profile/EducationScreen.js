@@ -28,7 +28,7 @@ const EducationScreen = () => {
   const loading = useSelector(state => state.userDetails.loading);
 
   const [data, setData] = useState({
-    education_type: '',
+    education_type: '1',
     institution: '',
   });
 
@@ -81,17 +81,35 @@ const EducationScreen = () => {
         title="Education"
       />
       <Content hasHeader contentContainerStyle={styles.container}>
-        <Error error={null} />
+        {/* <Error error={null} /> */}
         <Loading loading={loading} />
         <View>
-          <SelectDropdown
+          {/* <SelectDropdown
             data={qualification}
             label="Education"
             value={qualification.find(item => String(item.id) === String(data?.education_type))}
             placeholder="Select Education Type"
             dropDownStyle={styles.inputStyle}
             onSelectChange={value => handleTextChange('education_type', value)}
-          />
+          /> */}
+          <View style={styles.inputViewWrapper}>
+            <CommanText
+              commanText={'Education'}
+              commanTextstyle={[styles.textStyle,]}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }} >
+              <TextInputScreen
+                defaultInput
+                value={'Highest Qualification'}
+                readOnly={true}
+                placeholder="Education"
+                type="default"
+                inputStyle={[styles.inputStyle,]}
+              />
+              
+            </View>
+
+          </View>
 
           {data?.education_type == 1 ? (
             <SelectDropdown

@@ -14,11 +14,10 @@ import Video from 'react-native-video';
 import { Colors, Images } from '../../theme';
 import styles from './Styles/styles';
 import { useSelector } from 'react-redux';
-import PostStatusUpload from '../../api/PostStatusUpload';
 import GetMyStatus from '../../api/GetMyStatus';
-import { useFocusEffect } from '@react-navigation/native';
 import DeleteMyStatus from '../../api/DeleteMyStory';
 import Toast from 'react-native-toast-message';
+import { postStatus } from '../../api/api';
 
 const MyStoryUpload = ({ source = [], onChange }) => {
     const token = useSelector(state => state.auth.token);
@@ -28,7 +27,6 @@ const MyStoryUpload = ({ source = [], onChange }) => {
     const [currentIndex, setCurrentIndex] = React.useState(0);
     const [loading, setLoading] = React.useState(false);
 
-    // ✅ Pick image/video (NO upload here)
     const pickMedia = async () => {
         try {
             const totalUsed = storyList.length + mediaList.length;
@@ -43,11 +41,13 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                 return;
             }
 
-            const files = await ImagePicker.openPicker({
+            let files = await ImagePicker.openPicker({
                 mediaType: 'any',
-                multiple: true,
+                cropping: true,
+                compressImageQuality: 0.8,
             });
 
+            if (!Array.isArray(files)) files = [files];
             const limitedFiles = files.slice(0, remainingSlots);
 
             const formattedItems = limitedFiles.map(file => ({
@@ -57,60 +57,73 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                 caption: '',
             }));
 
-            setMediaList(prev => [...prev, ...formattedItems]);
-            onChange?.([...mediaList, ...formattedItems]);
+            setMediaList(prev => {
+                const newList = [...prev, ...formattedItems];
+                onChange?.(newList);
+                return newList;
+            });
         } catch (error) {
             console.log('❌ pickMedia error:', error);
         }
     };
 
-    // ✅ Upload/post selected files
     const handlePostStatus = async () => {
+        if (mediaList.length === 0) {
+            Alert.alert('No media selected', 'Please add at least one image or video.');
+            return;
+        }
+
+        setLoading(true);
+
         try {
-            if (mediaList.length === 0) {
-                Alert.alert('No media selected', 'Please add at least one image or video.');
-                return;
+            for (let i = 0; i < mediaList.length; i++) {
+                const file = mediaList[i];
+
+                const formData = new FormData();
+                formData.append('gallery_images[]', {
+                    uri: file.uri,
+                    name: file.name || `story_upload_${i}`,
+                    type: file.type,
+                });
+
+                const headers = `Bearer ${token}`;
+                const response = await postStatus(formData, headers);
+
+                if (response?.success) {
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Status Posted',
+                        text2: `File ${i + 1} uploaded successfully`,
+                    });
+                } else {
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Upload Error',
+                        text2: response?.message || `File ${i + 1} failed`,
+                    });
+                }
             }
 
-            setLoading(true);
-
-            const formattedMedia = mediaList.map((file, index) => ({
-                uri: file.uri,
-                name: file.filename || `story_upload_${index}`,
-                type: file.type,
-            }));
-
-            const response = await PostStatusUpload({
-                token,
-                mediaList: formattedMedia,
-            });
-
-            if (response?.success) {
-                Toast.show({
-                    type: 'success',
-                    text1: 'Status Posted',
-                    text2: response.message || 'Status posted successfully.',
-                });
-                setMediaList([]);
-                fetchStories();
-            } else {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Error',
-                    text2: response?.message || 'Something went wrong',
-                });
-            }
+            setMediaList([]);
+            fetchStories();
         } catch (error) {
             console.log('❌ handlePostStatus error:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Upload Failed',
+                text2: 'Something went wrong',
+            });
         } finally {
             setLoading(false);
         }
     };
 
     const removeMedia = index => {
-        const updatedList = mediaList.filter((_, i) => i !== index);
-        setMediaList(updatedList);
-        onChange?.(updatedList);
+        setMediaList(prev => {
+            const updated = prev.filter((_, i) => i !== index);
+            onChange?.(updated);
+            return updated;
+        });
     };
 
     const removeAllMedia = () => {
@@ -120,29 +133,36 @@ const MyStoryUpload = ({ source = [], onChange }) => {
 
     const fetchStories = async () => {
         setLoading(true);
-        const response = await GetMyStatus(token);
-        if (response?.success && Array.isArray(response.data)) {
-            setStoryList(response.data);
+        try {
+            const response = await GetMyStatus(token);
+            if (response?.success && Array.isArray(response.data)) {
+                setStoryList(response.data);
+            }
+        } catch (error) {
+            console.log('❌ fetchStories error:', error);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
-    useFocusEffect(
-        React.useCallback(() => {
-            fetchStories();
-            return () => { };
-        }, [])
-    );
+    React.useEffect(() => {
+        fetchStories();
+    }, []);
 
-    const handleDeleteStory = async id => {
+    const handleDeleteStory = async item => {
+        if (item.type === 'selected') {
+            removeMedia(mediaList.findIndex(i => i.uri === item.uri));
+            return;
+        }
+
         Alert.alert('Confirm', 'Delete this story?', [
             { text: 'Cancel' },
             {
                 text: 'Delete',
                 onPress: async () => {
+                    setLoading(true);
                     try {
-                        setLoading(true);
-                        const response = await DeleteMyStatus(id, token);
+                        const response = await DeleteMyStatus(item.id, token);
                         if (response?.success) {
                             Toast.show({
                                 type: 'success',
@@ -168,22 +188,25 @@ const MyStoryUpload = ({ source = [], onChange }) => {
     };
 
     const combinedList = [
-        ...storyList.map(item => ({ ...item, type: 'uploaded' })),
-        ...mediaList.map((item, index) => ({
+        ...storyList.map(item => ({
             ...item,
-            id: `media_${index}`,
-            path: item.uri,
+            type: 'uploaded',
+            key: `uploaded_${item.id}`, 
+        })),
+        ...mediaList.map(item => ({
+            ...item,
             type: 'selected',
+            key: `selected_${item.uri}`, 
         })),
     ];
 
-    const renderItem = ({ item, index }) => {
-        const isVideo = item.type?.startsWith?.('video');
+    const renderItem = ({ item }) => {
+        const isVideo = item.type?.startsWith('video');
 
         return (
             <View style={{ marginRight: 10 }}>
                 <TouchableOpacity
-                    onPress={() => handleDeleteStory(item.id)}
+                    onPress={() => handleDeleteStory(item)}
                     style={styles.singleDeletBtnWrap}
                 >
                     <Text style={styles.singleDeletBtn}>X</Text>
@@ -242,7 +265,7 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                 <FlatList
                     horizontal
                     data={combinedList}
-                    keyExtractor={(item, index) => `${item.id || item.path}_${index}`}
+                    keyExtractor={item => item.key}
                     renderItem={renderItem}
                     style={{ marginTop: 20, marginLeft: 20 }}
                     showsHorizontalScrollIndicator={false}
@@ -259,7 +282,6 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                         index,
                     })}
                 />
-
             )}
 
             <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
@@ -271,13 +293,12 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                             height: 8,
                             borderRadius: 4,
                             marginHorizontal: 4,
-                            marginBottom:30,
-                            backgroundColor: currentIndex === index ?  Colors.pink : 'gray',
+                            marginBottom: 30,
+                            backgroundColor: currentIndex === index ? Colors.pink : 'gray',
                         }}
                     />
                 ))}
             </View>
-
         </View>
     );
 };

@@ -11,9 +11,10 @@ const UserProfileShow = () => {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
   const userDetails = useSelector((state) => state.userDetails);
-  const { maritial_status, jobtype_list, caste } = useSelector(
+  const { maritial_status, jobtype_list, caste, state_list, city_list } = useSelector(
     (state) => state.preList
   );
+  console.log('userDetails :', userDetails);
 
   const loading = useSelector((state) => state.userDetails.loading);
   const [dashboardData, setDashboardData] = useState({});
@@ -62,9 +63,16 @@ const UserProfileShow = () => {
 
       const casteId = userDetails?.userReligion?.member_caste_id;
       const casteName = caste.find((item) => item.id === casteId)?.name || "N/A";
-    
+
+      const districtId = userDetails?.userAddress?.city_id;
+      const districtName = city_list.find((item) => item.id === districtId)?.name || "N/A";
+
+      const stateId = userDetails?.userAddress?.state_id;
+      const stateName = state_list.find((item) => item.id === stateId)?.name || "N/A";
+
       const mergedData = {
         ...userDetails.userBasicInfo,
+        name: userDetails.userBasicInfo.first_name,
         user_id: userDetails?.userBasicInfo.user_id,
         marital_status: maritalStatusName,
         searching_for: searchingName,
@@ -76,10 +84,12 @@ const UserProfileShow = () => {
         height: userDetails.userPhysicalAttributes?.height || "-",
         city_name: userDetails.userAddress?.address || "-",
         city: userDetails.userAddress?.city_name || "-",
+        district_name: districtName,
+        state_name: stateName,
         age: userDetails.userBasicInfo.birth_year
           ? new Date().getFullYear() - userDetails.userBasicInfo.birth_year
           : "-",
-          
+
       };
 
       setDashboardData(mergedData);
@@ -118,9 +128,9 @@ const UserProfileShow = () => {
         data={[dashboardData]}
         fullHeight
         handleRequest={handleCancelFavRequest}
-        handleCancelRequest={() => {}}
+        handleCancelRequest={() => { }}
         handleFavRequest={handleFavRequest}
-        handleCancelFavRequest={() => {}}
+        handleCancelFavRequest={() => { }}
       />
     </Container>
   );

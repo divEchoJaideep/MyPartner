@@ -1,10 +1,11 @@
 import axios from "axios";
 import Toast from "react-native-toast-message";
 import { globalLogout } from "../utils/globalLogout"; 
+import { apiBaseUrl } from "./const";
 
 let isLoggingOut = false;
 
-axios.defaults.baseURL = "https://clients.divecho.com/matrimony/api";
+axios.defaults.baseURL = apiBaseUrl;
 
 async function commonrequest(method, url, body = {}, token = "") {
   try {

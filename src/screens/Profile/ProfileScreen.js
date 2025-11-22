@@ -21,13 +21,13 @@ function ProfileScreen({ navigation }) {
   const token = useSelector((state) => state.auth.token);
   const [storedUser, setStoredUser] = React.useState(null);
 
- useFocusEffect(
-  React.useCallback(() => {
-   if (token) {
-      dispatch(getUserInfo(token));
-    }
-  }, [token])
-);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (token) {
+        dispatch(getUserInfo(token));
+      }
+    }, [token])
+  );
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
@@ -48,11 +48,11 @@ function ProfileScreen({ navigation }) {
 
   // const profilePhoto = storedUser?.photo || Images.UserImage;
   const profilePhoto =
-  userBasicInfo?.photo
-    ? (typeof userBasicInfo.photo === 'string'
+    userBasicInfo?.photo
+      ? (typeof userBasicInfo.photo === 'string'
         ? { uri: userBasicInfo.photo }
         : userBasicInfo.photo)
-    : storedUser?.photo || Images.UserImage;
+      : storedUser?.photo || Images.UserImage;
 
 
   const renderItem = ({ item }) => (
@@ -74,7 +74,7 @@ function ProfileScreen({ navigation }) {
   );
 
   return (
-    <Container 
+    <Container
     // transparentStatusBar={true}
     >
       <Header
@@ -83,19 +83,19 @@ function ProfileScreen({ navigation }) {
         title="Profile"
         onBackPress={() => navigation.goBack()}
       />
-        <TouchableOpacity
-          style={[styles.profileEditContent,{marginHorizontal:20}]}
-          onPress={() => navigation.navigate("ProfileEdit")}
-        >
-          <View style={styles.profileImageContent}>
-            <Image
-              source={profilePhoto}
-              resizeMode="cover"
-              style={styles.profileImage}
-            />
-          </View>
-          <View style={styles.userNameEmailText}>
-            <View>
+      <TouchableOpacity
+        style={[styles.profileEditContent, { marginHorizontal: 20 }]}
+        onPress={() => navigation.navigate("ProfileEdit")}
+      >
+        <View style={styles.profileImageContent}>
+          <Image
+            source={profilePhoto}
+            resizeMode="cover"
+            style={styles.profileImage}
+          />
+        </View>
+        <View style={styles.userNameEmailText}>
+          <View>
             <Text style={styles.userNameText}>
               {userBasicInfo?.first_name
                 ? userBasicInfo?.first_name
@@ -104,8 +104,8 @@ function ProfileScreen({ navigation }) {
             <Text style={styles.userEmailText}>
               {userBasicInfo?.phone ? `+91-${userBasicInfo?.phone}` : "+91-0123456789"}
             </Text>
-            </View>
-            <View style={styles.userEditImageContent}>
+          </View>
+          <View style={styles.userEditImageContent}>
             <TouchableOpacity onPress={() => navigation.navigate("UserPRofileShow")} style={styles.userShowProfile}>
               <Image
                 source={Images.OpenEye}
@@ -113,16 +113,16 @@ function ProfileScreen({ navigation }) {
                 style={styles.userEditImage}
                 tintColor={'#fff'}
               />
-              </TouchableOpacity>
-              {/* <Image
+            </TouchableOpacity>
+            {/* <Image
                 source={Images.EditIcon}
                 resizeMode="contain"
                 style={styles.userEditImage}
               /> */}
-              </View>
           </View>
-        </TouchableOpacity>
-              <Content hasHeader contentContainerStyle={styles.container}>
+        </View>
+      </TouchableOpacity>
+      <Content hasHeader contentContainerStyle={styles.container}>
 
         <View style={styles.profileLinkListContent}>
           <FlatList data={profileList} renderItem={renderItem} bounces={false} />

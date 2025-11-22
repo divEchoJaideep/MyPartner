@@ -1,7 +1,7 @@
 const accessToken =
   'Bearer HTbpO8qgoKCUv5H3fPqB38avoHW0CVVqsVaoVf8l0bRmIS1qOaeytudLWnf7ckl7j4fpomF9CreTo1WbL2B6EZyfCf9DUo7ToiFpJdUdHRQM36qv72j0RFwFp06MDOLB';
 //const apiBaseUrl = 'http://192.168.1.6:8000/api';
-const apiBaseUrl = 'https://clients.divecho.com/matrimony/api';
+const apiBaseUrl = 'https://partnermy.com/api';
 const loginUrl = `${apiBaseUrl}/signin`;
 const signupUrl = `${apiBaseUrl}/signup`;
 const passwordChange = `${apiBaseUrl}/member/change/password`;

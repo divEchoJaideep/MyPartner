@@ -1,5 +1,5 @@
 import commonrequest from "./commonrequest";
-import { basicinfo, chatApi, getBasicInfo, getFriendStory, getFullProfile, getKnownLanguages, getNotification, getUserDetails, idProff, passwordChange, passwordForgot, passwordReset, personalImageDelete, profiledropdownUrl,requestInterestCancel,saveFCMToken,Share,subCaste, SubscriptionPackage, updateAddress, updateCareer, updateEducation, updateImages, updateLanguage, updatePhysicalAttributes, updateSpiritual, userBlock, userBlockedList, userCancelRequest, userRequest, userRequestAccepted, userUnBlock } from "./const";
+import { basicinfo, chatApi, getBasicInfo, getFriendStory, getFullProfile, getKnownLanguages, getNotification, getUserDetails, idProff, passwordChange, passwordForgot, passwordReset, personalImageDelete, postStatusUpload, profiledropdownUrl,requestInterestCancel,saveFCMToken,Share,subCaste, SubscriptionPackage, updateAddress, updateCareer, updateEducation, updateImages, updateLanguage, updatePhysicalAttributes, updateSpiritual, userBlock, userBlockedList, userCancelRequest, userRequest, userRequestAccepted, userUnBlock } from "./const";
 
 
 export const getUserBasicInformation = async (token) => {
@@ -140,4 +140,8 @@ export const getShare = async ( header) => {
 
 export const postShar = async (header) => {
     return await commonrequest('POST', `${Share}`, '', header);
+};
+
+export const postStatus = async (data, header) => {
+    return await commonrequest('POST', `${postStatusUpload}`, data, header);
 };

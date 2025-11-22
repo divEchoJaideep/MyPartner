@@ -35,6 +35,7 @@ const DashboardNavigation = () => {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
+          // height: 50,
           backgroundColor: Colors.white,
           paddingVertical: 10,
           paddingBottom: 20,

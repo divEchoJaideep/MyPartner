@@ -9,7 +9,8 @@ import { displayNotification } from './utils/diplayNotification';
 import useCheckProfile from './AppInitializer';
 import { AuthContext } from './context/AuthContext';
 import { UnreadProvider } from './context/UnreadContext';
-import {navigationRef} from './navigation/RootNavigation';
+import { navigationRef } from './navigation/RootNavigation';
+import { CopilotProvider } from 'react-native-copilot';
 
 
 const linking = {
@@ -18,11 +19,11 @@ const linking = {
 };
 
 const orderNav = [
-  { key: "express_interest", screen: { name: "Topboard", child: "Received" } },
-  { key: "reject_interest", screen: { name: "Home", child: null } },
+  { key: "Express interest", screen: { name: "Topboard", child: "Received" } },
+  { key: "Reject interest", screen: { name: "Home", child: null } },
   { key: "Remove_favorites", screen: { name: "Home", child: null } },
   { key: "add_to_favorites", screen: { name: "Home", child: null } },
-  { key: "accept_interest", screen: { name: "Topboard", child: "Sent" } },
+  { key: "Accept interest", screen: { name: "Topboard", child: "Sent" } },
   { key: "new_message", screen: { name: "Dashboard", child: "Chat" } },
   // { key: "order_cancelled", screen: { name: "OrderMain", child: "CancellOrder" } },
   // { key: "chat_notification", screen: { name: "Chats", child: null } },
@@ -84,6 +85,7 @@ const AppContent = () => {
 
   useEffect(() => {
     const unsubscribeForeground = messaging().onMessage(async remoteMessage => {
+console.log('Foreground message:', remoteMessage);
 
       await displayNotification(
         remoteMessage?.notification?.title || "New Notification",
@@ -109,23 +111,25 @@ const AppContent = () => {
   }, []);
 
   return (
-    <UnreadProvider>
-    <NavigationContainer
-    linking={linking} 
-      ref={navigationRef}
-      onReady={() => {
-        const route = navigationRef.current?.getCurrentRoute();
-        if (route) setCurrentRoute(route.name);
-      }}
-      onStateChange={() => {
-        const route = navigationRef.current?.getCurrentRoute();
-        if (route) setCurrentRoute(route.name);
-      }}
-    >
-      <AppNavigation />
-      <Toast />
-    </NavigationContainer>
-    </UnreadProvider>
+    <CopilotProvider>
+      <UnreadProvider>
+        <NavigationContainer
+          linking={linking}
+          ref={navigationRef}
+          onReady={() => {
+            const route = navigationRef.current?.getCurrentRoute();
+            if (route) setCurrentRoute(route.name);
+          }}
+          onStateChange={() => {
+            const route = navigationRef.current?.getCurrentRoute();
+            if (route) setCurrentRoute(route.name);
+          }}
+        >
+          <AppNavigation />
+          <Toast />
+        </NavigationContainer>
+      </UnreadProvider>
+    </CopilotProvider>
   );
 };
 

@@ -4,7 +4,7 @@ import { Container, Content, Header } from '../../components';
 import TextInputScreen from '../../components/SignUpLogIn/TextInput';
 import CommanBtnScreen from '../../components/CommanBtn';
 import styles from './Styles/ProfileStyle';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import SelectDropdown from '../../components/SelectDropdown/Select';
 import { useDispatch, useSelector } from 'react-redux';
 import Error from '../../components/Error';
@@ -14,6 +14,7 @@ import ProfilePhoto from '../../components/ProfilePhoto';
 import StatusModal from '../../components/StatusModal/StatusModal';
 import { Images } from '../../theme';
 import CommanText from '../../components/CommanText';
+import Toast from 'react-native-toast-message';
 
 const genderOptions = [
   { id: 1, name: 'Male' },
@@ -44,6 +45,7 @@ const ProfileDetailsScreen = () => {
   const success = useSelector(state => state.userDetails.success);
   const { onbehalf_list, maritial_status } = useSelector(state => state.preList);
   const token = useSelector(state => state.auth.token);
+  const [toastShown, setToastShown] = useState(false);
   const [data, setData] = useState({
     first_name: '',
     searching_for: '',
@@ -56,6 +58,28 @@ const ProfileDetailsScreen = () => {
     photo: '',
   });
 
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!toastShown && (!userBasicInfo || !userBasicInfo.first_name)) {
+        flashMessage();
+        setToastShown(true);
+      }
+    }, [toastShown])
+  );
+
+
+  const flashMessage = () => {
+    Toast.show({
+      type: 'info',
+      text1: 'Please update your info carefully',
+      text2: 'Name, Phone, Birth Year & Gender cannot be changed.',
+      position: 'top',
+      visibilityTime: 7000,
+      visibility: true,
+      textStyle: { fontSize: 14 },
+    });
+
+  }
 
   useEffect(() => {
     if (userBasicInfo) {
@@ -156,44 +180,48 @@ const ProfileDetailsScreen = () => {
 
           {/* <Error error="" /> */}
 
-           <View style={styles.inputViewWrapper}>
+          <View style={styles.inputViewWrapper}>
             <CommanText
               commanText={'Name'}
               commanTextstyle={[styles.textStyle,]}
             />
-            <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',width:'100%'}} >
-            <TextInputScreen
-            defaultInput
-            value={data.first_name}
-            onChangeText={text => handleTextChange('first_name', text)}
-            placeholder="Name"
-            type="default"
-            inputStyle={styles.inputStyle}
-          />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }} >
+              <TextInputScreen
+                defaultInput
+                value={data.first_name}
+                readOnly={data.first_name ? true : false}
+                onChangeText={text => handleTextChange('first_name', text)}
+                placeholder="Name"
+                type="default"
+                inputStyle={[styles.inputStyle,]}
+              />
+              {/* {data.first_name && (
+                <CommanText
+                  commanText={'Read Only'}
+                  commanTextstyle={[styles.textStyle,]}
+                />
+              )} */}
             </View>
-            
+
           </View>
           <View style={styles.inputViewWrapper}>
             <CommanText
               commanText={'Phone'}
               commanTextstyle={[styles.textStyle,]}
             />
-            <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',width:'100%'}} >
-            <TextInputScreen
-              defaultInput
-              readOnly
-              value={data.phone}
-              placeholder="Phone"
-              type="default"
-              inputStyle={[styles.inputStyle,{width:'80%'}]}
-              onChangeText={text => handleTextChange('phone', text)}
-            />
-            <CommanText
-              commanText={'Read Only'}
-              commanTextstyle={[styles.textStyle,]}
-            />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }} >
+              <TextInputScreen
+                defaultInput
+                readOnly
+                value={data.phone}
+                placeholder="Phone"
+                type="default"
+                inputStyle={[styles.inputStyle,]}
+                onChangeText={text => handleTextChange('phone', text)}
+              />
+
             </View>
-            
+
           </View>
 
           <SelectDropdown
@@ -232,6 +260,7 @@ const ProfileDetailsScreen = () => {
             label="Birth Year"
             value={data.birth_year}
             search
+            disabled={data.birth_year ? true : false}
             labelField="name"
             valueField="id"
             placeholder="Birth Year"
@@ -243,6 +272,7 @@ const ProfileDetailsScreen = () => {
             dropdownPosition='top'
             label="Gender"
             value={data.gender}
+            disabled={data.gender ? true : false}
             labelField="name"
             valueField="id"
             placeholder="Select Gender"

@@ -10,7 +10,7 @@ import { fullDetailProfile } from '../../api/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Loading from '../../components/Loading';
 import Toast from 'react-native-toast-message';
-import { getCasteByRelisionCaste, getCityListByStateId, getSubCasteByCaste } from '../../redux/actions/userDetailsActions';
+import { getCasteByRelisionCaste, getCityListByStateId, getReligionCasteByRelisionId, getSubCasteByCaste } from '../../redux/actions/userDetailsActions';
 
 const { width } = Dimensions.get('window');
 
@@ -34,17 +34,18 @@ const ProfileData = () => {
     { id: 2, name: "Specially Abled" }
   ];
 
-  const { religion_list, caste, subCaste, jobtype_list, country_list, state_list, city_list, maritial_status } = useSelector(state => state.preList);
+  const { religion_list, religionCaste, caste, subCaste, jobtype_list, country_list, state_list, city_list, maritial_status } = useSelector(state => state.preList);
   const tokenRedux = useSelector(state => state.auth.token);
 
-  const { highest_education_list } = useSelector(state => state.preList);
-  const { userId ,document} = route.params || {};
+  const { highest_education_list, onbehalf_list } = useSelector(state => state.preList);
+  const { userId, document } = route.params || {};
 
   const [profile, setProfile] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [profileInfo, setProfileInfo] = useState({});
   console.log('profileInfo :', profileInfo);
+  console.log('religionCaste :', religionCaste);
 
   useFocusEffect(
     useCallback(() => {
@@ -57,8 +58,7 @@ const ProfileData = () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('UserToken');
-      console.log('token :',token);
-      
+
       const response = await fullDetailProfile(userId, token);
       console.log('fullDetailProfile :', response);
 
@@ -77,6 +77,9 @@ const ProfileData = () => {
   }, [profile?.present_address?.state_id, dispatch]);
 
   useEffect(() => {
+    if (profile?.spiritual_backgrounds?.member_religion_id) {
+      dispatch(getReligionCasteByRelisionId(profile.spiritual_backgrounds.member_religion_id, tokenRedux));
+    }
     if (profile?.spiritual_backgrounds?.member_religion_caste_id) {
       dispatch(getCasteByRelisionCaste(profile.spiritual_backgrounds.member_religion_caste_id, tokenRedux));
     }
@@ -84,6 +87,8 @@ const ProfileData = () => {
     if (profile?.spiritual_backgrounds?.member_caste_id) {
       dispatch(getSubCasteByCaste(profile.spiritual_backgrounds.member_caste_id, tokenRedux));
     }
+
+
   }, [profile, dispatch, tokenRedux]);
 
 
@@ -92,18 +97,21 @@ const ProfileData = () => {
     if (!profile) return;
 
     const { present_address, spiritual_backgrounds, career, education } = profile;
+    const categoryId = spiritual_backgrounds?.member_religion_caste_id;
     const religionId = spiritual_backgrounds?.member_religion_id;
     const casteId = spiritual_backgrounds?.member_caste_id;
     const subCasteId = spiritual_backgrounds?.member_sub_caste_id;
+    const on_behalfId = profile?.basic_info?.on_behalf;
 
     const countryId = present_address?.country_id;
     const stateId = present_address?.state_id;
     const cityId = present_address?.city_id;
 
+    const CategoryName = religionCaste?.find(r => r.id === categoryId)?.name || '';
     const religionName = religion_list?.find(r => r.id === religionId)?.name || '';
     const casteName = caste?.find(c => c.id === casteId)?.name || '';
     const subCasteName = subCaste?.find(s => s.id === subCasteId)?.name || '';
-
+    const onBehalfName = onbehalf_list?.find(o => o.id === on_behalfId)?.name || '';
     const countryName = country_list?.find(c => c.id === countryId)?.name || '';
     const stateName = state_list?.find(s => s.id === stateId)?.name || '';
     const cityName = city_list?.find(c => c.id === cityId)?.name || '';
@@ -129,7 +137,9 @@ const ProfileData = () => {
     const physicalAttribute = body_type?.find(p => p.id === physicalAttributeId)?.name || 'N/A';
 
     setProfileInfo({
+      category: CategoryName,
       religion: religionName,
+      onBehalf: onBehalfName,
       caste: casteName,
       subCaste: subCasteName,
       country: countryName,
@@ -210,15 +220,27 @@ const ProfileData = () => {
           <View style={styles.infoBox} >
             <View style={styles.card}>
               <View style={styles.CardLableWrap}>
-                <CommanText commanText={`Verified:`} commanTextstyle={styles.infoText} />
+                <CommanText commanText={`Govt. ID Uploaded:`} commanTextstyle={[styles.infoText, { width: width / 2 }]} />
               </View>
               <View style={styles.CardTextWrap}>
-                <CommanText commanText={`${profile?.document_verified == true  ? 'Yes' : 'No'}`} commanTextstyle={[styles.infoText, styles.infoTextAlign]} />
+                <CommanText commanText={`${profile?.document_verified == true ? 'Yes' : 'No'}`} commanTextstyle={[styles.infoText, styles.infoTextAlign]} />
               </View>
             </View>
           </View>
         </View>
-
+         <View style={styles.bottomContainer} >
+          <CommanHeading headingText heading={'Profile Handler'} /> 
+          <View style={styles.infoBox} >
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
+                <CommanText commanText={`Profile Handler:`} commanTextstyle={[styles.infoText, { width: width / 2 }]} />
+              </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={`${profileInfo?.onBehalf  }`} commanTextstyle={[styles.infoText, styles.infoTextAlign]} />
+              </View>
+            </View>
+          </View>
+        </View>
         <View style={styles.bottomContainer}>
           <CommanHeading headingText heading="Basic Information" />
           <View style={styles.infoBox}>
@@ -240,12 +262,21 @@ const ProfileData = () => {
             </View>
             <View style={styles.card}>
               <View style={styles.CardLableWrap}>
+                <CommanText commanText={`Year of Birth:`} commanTextstyle={styles.infoText} />
+              </View>
+              <View style={styles.CardTextWrap}>
+                <CommanText commanText={` ${profile?.basic_info?.birth_year}`} commanTextstyle={[styles.infoText, styles.infoTextAlign]} />
+              </View>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.CardLableWrap}>
                 <CommanText commanText={`Searching For:`} commanTextstyle={styles.infoText} />
               </View>
               <View style={styles.CardTextWrap}>
                 <CommanText commanText={` ${capitalize(profileInfo.Searching)}`} commanTextstyle={[styles.infoText, styles.infoTextAlign]} />
               </View>
             </View>
+
             <View style={styles.card}>
               <View style={styles.CardLableWrap}>
                 <CommanText commanText={`Religion:`} commanTextstyle={styles.infoText} />
@@ -254,12 +285,13 @@ const ProfileData = () => {
                 <CommanText commanText={` ${capitalize(profileInfo.religion)}`} commanTextstyle={[styles.infoText, styles.infoTextAlign]} />
               </View>
             </View>
+
             <View style={styles.card}>
               <View style={styles.CardLableWrap}>
-                <CommanText commanText={`Year of Birth:`} commanTextstyle={styles.infoText} />
+                <CommanText commanText={`Category:`} commanTextstyle={styles.infoText} />
               </View>
               <View style={styles.CardTextWrap}>
-                <CommanText commanText={` ${profile?.basic_info?.birth_year}`} commanTextstyle={[styles.infoText, styles.infoTextAlign]} />
+                <CommanText commanText={` ${capitalize(profileInfo.category)}`} commanTextstyle={[styles.infoText, styles.infoTextAlign]} />
               </View>
             </View>
             <View style={styles.card}>
@@ -352,7 +384,7 @@ const ProfileData = () => {
                 <CommanText commanText={`${profile?.physical_attributes?.height}`} commanTextstyle={[styles.infoText, styles.infoTextAlign]} />
               </View>
             </View>
-           
+
             <View style={styles.card}>
               <View style={styles.CardLableWrap}>
                 <CommanText commanText={`Languages:`} commanTextstyle={styles.infoText} />

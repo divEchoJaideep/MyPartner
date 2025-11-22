@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Container, Content, Header } from '../../components';
 import CommanBtnScreen from '../../components/CommanBtn';
 import styles from './Styles/ProfileStyle';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import SelectDropdown from '../../components/SelectDropdown/Select';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -11,6 +11,7 @@ import StatusModal from '../../components/StatusModal/StatusModal';
 import Error from '../../components/Error';
 import Loading from '../../components/Loading';
 import { getCasteByRelisionCaste, getReligionCasteByRelisionId, getSubCasteByCaste, updateReligionAndCulture, } from '../../redux/actions/userDetailsActions';
+import Toast from 'react-native-toast-message';
 
 const SocialBackground = () => {
   const navigation = useNavigation();
@@ -20,6 +21,7 @@ const SocialBackground = () => {
     useSelector(state => state.preList);
   const userReligionInfo = useSelector(state => state.userDetails.userReligion);
   const token = useSelector(state => state.auth.token);
+console.log('userReligionInfo :',userReligionInfo);
 
   const [formData, setFormData] = useState({
     member_religion_id: '',
@@ -32,6 +34,8 @@ const SocialBackground = () => {
   const [modalType, setModalType] = useState('');
   const [modalMessage, setModalMessage] = useState('');
   const [nextScreen, setNextScreen] = useState(null);
+    const [toastShown, setToastShown] = useState(false);
+  
 
   // Fetch user data on mount
   useEffect(() => {
@@ -86,6 +90,29 @@ const SocialBackground = () => {
     dispatch(getSubCasteByCaste(id, token));
   };
 
+   useFocusEffect(
+      React.useCallback(() => {
+        if (!toastShown && (!userReligionInfo || !userReligionInfo.member_religion_id)) {
+          flashMessage();
+          setToastShown(true);
+        }
+      }, [userReligionInfo, toastShown])
+    );
+
+    
+      const flashMessage = () => {
+        Toast.show({
+          type: 'info',
+          text1: 'Please update your info carefully',
+          text2: 'Religion, Category & Caste cannot be changed.',
+          position: 'top',
+          visibilityTime: 7000,
+          visibility: true,
+          textStyle: { fontSize: 14 },
+        });
+    
+      }
+
   const saveData = async () => {
     try {
       const res = await dispatch(updateReligionAndCulture(formData, token));
@@ -119,6 +146,7 @@ const SocialBackground = () => {
           <SelectDropdown
             data={religion_list ?? []}
             value={formData.member_religion_id}
+            disabled={formData.member_religion_id ? true : false}
             label="Religion"
             placeholder="Select Religion"
             onSelectChange={onReligionChange}
@@ -126,6 +154,7 @@ const SocialBackground = () => {
           <SelectDropdown
             data={religionCaste ?? []}
             value={formData.member_religion_caste_id}
+            disabled={formData.member_religion_caste_id ? true : false}
             label="Categories"
             placeholder="Select Category"
             onSelectChange={onReligionCasteChange}
@@ -133,17 +162,19 @@ const SocialBackground = () => {
           <SelectDropdown
             data={caste ?? []}
             value={formData.member_caste_id}
+            disabled={formData.member_caste_id ? true : false}
             label="Caste"
             placeholder="Select Caste"
             onSelectChange={onCasteChange}
           />
-          <SelectDropdown
+          {/* <SelectDropdown
             data={subCaste ?? []}
             value={formData.member_sub_caste_id}
+            // disabled={formData.member_sub_caste_id ? true : false}
             label="Sub Caste"
             placeholder="Select Sub Caste"
             onSelectChange={(value) => handleChange('member_sub_caste_id', value)}
-          />
+          /> */}
         </View>
       </Content>
 

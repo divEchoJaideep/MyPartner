@@ -10,29 +10,17 @@ import {
   RefreshControl,
   ActivityIndicator,
   Platform,
+  StatusBar
 } from 'react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import { isIphoneX } from '../../libs/Utils';
 import CommanText from '../CommanText';
 import { Colors, Images } from '../../theme';
 import Container from '../Container';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { height, width } = Dimensions.get('window');
-console.log('height :', height);
-
-const ITEM_HEIGHT =
-  height <= 740 ? height - 22 :
-    height <= 820 ? height - 90 :
-      height <= 900 ? height + 10 :
-        height - 50;
-
- const FULLHEIGHT =
- height <= 740 ? height * 1.04 :
-    height <= 820 ? height * 0.94 :
-      height <= 900 ? height * 1.04:
-        height ;      
-
-const BOTTOM_PADDING = isIphoneX() ? 100 : Platform.OS === 'ios' ? 70 : 20;
+const { height, width } = Dimensions.get("window");
 
 const SnapScrolling = ({
   data,
@@ -46,9 +34,16 @@ const SnapScrolling = ({
   handleCancelRequest,
   handleCancelFavRequest,
   fullHeight = false,
+  tabHeight=0,
 }) => {
   const navigation = useNavigation();
-  console.log('data :', data);
+  const ststusBarHeight = StatusBar.currentHeight
+  const inset = useSafeAreaInsets();
+  const ITEM_HEIGHT = height + ststusBarHeight - inset.bottom ;
+  const FULLHEIGHT = height - tabHeight + ststusBarHeight - inset.bottom + 3 ;
+
+
+  console.log('tabHeight', height, tabHeight, ststusBarHeight, ITEM_HEIGHT, FULLHEIGHT);
 
   const renderFooter = () => {
     if (!loadingMore) return null;
@@ -68,7 +63,7 @@ const SnapScrolling = ({
       resizeMode="cover"
       style={[
         styles.videoContainer,
-        { height: fullHeight ? FULLHEIGHT : ITEM_HEIGHT },
+        { flex:1, height: fullHeight ? ITEM_HEIGHT :  FULLHEIGHT },
       ]}
     >
       <TouchableOpacity
@@ -76,14 +71,14 @@ const SnapScrolling = ({
           navigation.navigate('ProfileData', {
             userId: item?.user_id,
             userProfileData: item,
-            document : item?.documents
+            document: item?.documents
           })
         }
         style={styles.itemWrap}
         activeOpacity={0.9}
       >
         {/* Top Section */}
-        <View>
+        <View >
           <View
             style={[
               styles.row,
@@ -105,14 +100,19 @@ const SnapScrolling = ({
           </View>
         </View>
 
-        <View style={[styles.cardInnerWrap, { bottom: BOTTOM_PADDING }]}>
+        <View style={[styles.cardInnerWrap]}>
           <View>
             <View style={styles.row}>
               <CommanText
-                commanText={item.name || item.first_name}
+                commanText={`${item.name},` || `${item.first_name},`}
                 commanTextstyle={styles.textStyle}
               />
 
+
+              <CommanText
+                commanText={` ${item.age} yrs`}
+                commanTextstyle={styles.textStyle}
+              />
               {item.documents && (
                 <Image
                   source={Images.VerifyIconDoc}
@@ -120,11 +120,6 @@ const SnapScrolling = ({
                   style={styles.cardInnerIcon}
                 />
               )}
-
-              <CommanText
-                commanText={` ${item.age}, ${item.marital_status}`}
-                commanTextstyle={styles.textStyle}
-              />
             </View>
 
             <View style={styles.row}>
@@ -136,7 +131,7 @@ const SnapScrolling = ({
 
             <View style={styles.row}>
               <CommanText
-                commanText={`${item.city_name}`}
+                commanText={`${item.district_name}, ${item.state_name}`}
                 commanTextstyle={styles.textStyle}
               />
             </View>
@@ -188,11 +183,13 @@ const SnapScrolling = ({
   }
 
   return (
+    // <Container transparentStatusBar={true} lightContent={true} >
       <FlatList
         data={data}
         renderItem={renderItem}
         pagingEnabled
-        snapToInterval={fullHeight ? height : ITEM_HEIGHT}
+        // snapToInterval={fullHeight ? height : ITEM_HEIGHT}
+        keyExtractor={(item, index) => index.toString()}
         decelerationRate="fast"
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -208,6 +205,7 @@ const SnapScrolling = ({
         snapToAlignment="start"
         bounces={false}
       />
+    // </Container>
   );
 };
 
@@ -240,11 +238,11 @@ const styles = StyleSheet.create({
   cardInnerIcon: {
     width: 20,
     height: 20,
-    marginLeft: 6,
+    marginLeft: 3,
   },
   cardInnerWrap: {
-    position: 'absolute',
-    marginHorizontal: 20,
+    // position: 'absolute',
+    // marginHorizontal: 20,
   },
   buttonWrap: {
     height: 55,

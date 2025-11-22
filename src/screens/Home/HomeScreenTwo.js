@@ -6,6 +6,7 @@ import {
 import SnapScrolling from '../../components/SnapScrolling/SnapScrolling';
 import { Container, Content } from '../../components';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import GetUserDashboard from '../../api/GetUserDashboard';
 import { useDispatch, useSelector } from 'react-redux';
 import PostFavRequest from '../../api/PostFavRequest';
@@ -19,11 +20,8 @@ import commonrequest from '../../api/commonrequest';
 import { setPreDefineState } from '../../redux/reducers/perDefineListReducer';
 import { profiledropdownUrl } from '../../api/const';
 
-const { height } = Dimensions.get('window');
-
 const HomeScreenTwo = () => {
-  const tabHeight = isIphoneX() ? 110 : 92;
-  const tabContainerHeight = height - tabHeight;
+  const tabHeight = useBottomTabBarHeight();
   const dispatch = useDispatch();
   const token = useSelector(state => state.auth.token);
   useEffect(() => {
@@ -230,6 +228,7 @@ console.log('dashboardData :',dashboardData);
         <SnapScrolling
           data={dashboardData}
           loadMore={loadMore}
+          tabHeight={tabHeight}
           loadingMore={loading}
           handleRefresh={handleRefresh}
           initialLoader={initialLoader}
