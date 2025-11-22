@@ -56,7 +56,6 @@ const SnapScrolling = ({
     );
   };
 
-  /** Single Item Renderer */
   const renderItem = ({ item }) => (
     <ImageBackground
       source={{ uri: item.photo }}
