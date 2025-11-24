@@ -39,7 +39,7 @@ export default class Header extends React.PureComponent {
       textRight,
       onTextRightBtnPress,
       hasMoreBTN,
-     
+      lightTheme,
     } = this.props;
 
     return (
@@ -47,7 +47,7 @@ export default class Header extends React.PureComponent {
         <StatusBar
           translucent
           backgroundColor="transparent"
-          barStyle="dark-content"
+          barStyle={lightTheme ? "light-content" : "dark-content"}
         />
 
         <View

@@ -229,7 +229,7 @@ const ProfileData = () => {
           </View>
         </View>
          <View style={styles.bottomContainer} >
-          <CommanHeading headingText heading={'Profile Handler'} /> 
+          <CommanHeading headingText heading={'Manage By'} /> 
           <View style={styles.infoBox} >
             <View style={styles.card}>
               <View style={styles.CardLableWrap}>

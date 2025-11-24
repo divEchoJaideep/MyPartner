@@ -204,7 +204,7 @@ const MyStoryUpload = ({ source = [], onChange }) => {
         const isVideo = item.type?.startsWith('video');
 
         return (
-            <View style={{ marginRight: 10 }}>
+            <View style={styles.listContainer}>
                 <TouchableOpacity
                     onPress={() => handleDeleteStory(item)}
                     style={styles.singleDeletBtnWrap}
@@ -222,7 +222,7 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                     <Image
                         source={{ uri: item.uri || item.image_url || item.path }}
                         style={styles.mediaList}
-                        resizeMode="cover"
+                        resizeMode='contain'
                     />
                 )}
             </View>
@@ -267,8 +267,9 @@ const MyStoryUpload = ({ source = [], onChange }) => {
                     data={combinedList}
                     keyExtractor={item => item.key}
                     renderItem={renderItem}
-                    style={{ marginTop: 20, marginLeft: 20 }}
+                   // style={{ marginTop: 20, marginLeft: 20 }}
                     showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: 20,gap:40 }}
                     pagingEnabled
                     onMomentumScrollEnd={e => {
                         const index = Math.round(

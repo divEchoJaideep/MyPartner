@@ -40,7 +40,7 @@ const SnapScrolling = ({
   const ststusBarHeight = StatusBar.currentHeight
   const inset = useSafeAreaInsets();
   const ITEM_HEIGHT = height + ststusBarHeight - inset.bottom ;
-  const FULLHEIGHT = height - tabHeight + ststusBarHeight - inset.bottom + 3 ;
+  const FULLHEIGHT = height + ststusBarHeight - tabHeight  - inset.bottom  ;
 
 
   console.log('tabHeight', height, tabHeight, ststusBarHeight, ITEM_HEIGHT, FULLHEIGHT);

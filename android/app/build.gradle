@@ -116,6 +116,11 @@ android {
             }
         }
     }
+     externalNativeBuild {
+    cmake {
+        buildStagingDirectory "C:/cmake_build"
+    }
+}
 }
 
 dependencies {

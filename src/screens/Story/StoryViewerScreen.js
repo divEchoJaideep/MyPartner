@@ -18,7 +18,7 @@ const StoryViewerScreen = ({ route, navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
   const progress = useRef(new Animated.Value(0)).current;
-  const durationPerStory = 10 * 1000; 
+  const durationPerStory = 10 * 1000;
   useEffect(() => {
     animateProgress();
   }, [currentIndex]);
@@ -106,6 +106,7 @@ const StoryViewerScreen = ({ route, navigation }) => {
   return (
     <>
       <Header
+        lightTheme
         transparent
         absolute
         hasBackBtn
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
   storyImage: {
     width,
     height,
-    resizeMode: 'cover',
+    resizeMode: 'contain',
   },
   overlay: {
     position: 'absolute',
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
   headerRow: {
     // flexDirection: 'row',
     marginLeft: 20,
-    marginTop:30,
+    marginTop: 30,
     justifyContent: 'space-between',
     // alignItems: 'center',
   },

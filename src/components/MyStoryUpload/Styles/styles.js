@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     // },
     mediaList: {
         width: ScreenWidth - 40,
-        height: '85%',
+        height: '100%',
         borderRadius: 10,
         borderWidth: 0,
 
@@ -159,6 +159,12 @@ const styles = StyleSheet.create({
     //     height:ScreenHeight/10 + 30,
     //     backgroundColor:'red'
     //   },
+    listContainer:{
+        backgroundColor:'#aaa',
+        height:'85%',
+        borderRadius:10,
+        marginTop:20,
+    },
 });
 
 export default styles;
